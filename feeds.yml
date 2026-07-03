@@ -1,14 +1,17 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # NTE news sources → Discord.  Add/remove as many as you want — NO limit.
 #
-#   type: rss        → any RSS/Atom feed URL
-#   type: pw_scrape  → the official Perfect World news index (HTML, no RSS)
-#   type: steam_news → official Steam announcements (needs `appid:`)
-#   color:           → embed side-color (hex)
-#   enabled: false   → keep it in the file but skip it
-#   optional: true   → a fetch failure is ignored quietly (no noise)
-#   include/exclude: → regex on the title to keep / drop items (de-noise)
-#   ping: false      → never @-ping for this source (see PING_ROLE_ID)
+#   type: rss           → any RSS/Atom feed URL
+#   type: pw_scrape     → the official Perfect World news index (HTML, no RSS)
+#   type: steam_news    → official Steam announcements (needs `appid:`)
+#   type: codes_tracker → scrape active codes → one self-updating pinned message
+#   color:              → embed side-color (hex)
+#   enabled: false      → keep it in the file but skip it
+#   optional: true      → a fetch failure is ignored quietly (no noise)
+#   include:            → title MUST match this regex (stay on-topic)
+#   exclude:            → drop titles matching this regex (noise)
+#   keep:               → whitelist regex that OVERRIDES exclude (news beats guides)
+#   ping: false         → never @-ping for this source (see PING_ROLE_ID)
 #
 # The bot de-duplicates ACROSS sources by story (url + normalized title), so the
 # same news picked up by several feeds is posted only once — by whichever source
@@ -51,6 +54,18 @@
   include: '(?i)\b(code|redeem|patch ?notes?|maintenance|hotfix|official|datamine|leak(ed|s)?|announce(d|ment)?|drop ?rate|tier ?list|new banner|new character|nerf|buff)\b'
   exclude: '(?i)megathread|daily thread|weekly question|free ?talk|rate my|cosplay'
 
+# Dedicated NTE leaks subreddit (beta/datamine/upcoming banners & characters).
+# Optional because Reddit sometimes rate-limits cloud IPs; light filter keeps it
+# to actual leaks, not mod posts / memes / general discussion.
+- name: "Leaks — r/NTELeaks"
+  type: rss
+  url: "https://www.reddit.com/r/NTELeaks/.rss"
+  color: 0x9146FF
+  emoji: "🔓"
+  optional: true
+  include: '(?i)\b(leak(ed|s)?|beta|datamine[d]?|drip ?marketing|prefarm|upcoming|new (character|unit|banner|arc|weapon)|banner|version|v?\d+\.\d+|kit|skill|roadmap|schedule|silhouette|teaser)\b'
+  exclude: '(?i)megathread|daily|weekly|moderator|announcement|rule|meme|fan ?art|cosplay|discussion thread|question'
+
 - name: "Community — neverness.gg"
   type: rss
   url: "https://neverness.gg/feed/"
@@ -66,7 +81,19 @@
   url: "https://news.google.com/rss/search?q=%22Neverness%20to%20Everness%22%20when%3A30d&hl=en-US&gl=US&ceid=US:en"
   color: 0x4285F4
   emoji: "🗞️"
-  include: '(?i)neverness|\bNTE\b'   # drop tangential articles that only mention NTE in passing
+  include: '(?i)neverness|\bNTE\b'   # stay on-topic (drop passing mentions)
+  # Real news ALWAYS passes (beats the exclude below)…
+  keep:    '(?i)\b(code|redeem|maintenance|hotfix|patch|update|version|banner|event|launch|release|leak|nerf|buff|compensat|announce|anniversary|collab|revenue|delay|server|down)\b'
+  # …but strip the evergreen guide/tier-list/reroll SEO spam that isn't news.
+  exclude: '(?i)(tier ?list|reroll|best (build|team)|beginner|how to get|team comp|walkthrough|\bfarm(ing)?\b|\btips\b|wiki|voice actor|fishing|dailies|city tycoon|\bcafe\b|materials|ascension|\bfons\b|reset time|worth (pulling|it)|should you|guide)'
+
+# Live "Active codes" card: the bot scrapes the current working codes and keeps
+# ONE message updated in place (edits it when codes change; pings on brand-new
+# codes). Pin the message it creates. Not a normal feed item.
+- name: "Codes tracker"
+  type: codes_tracker
+  url: "https://neverness.gg/codes/"
+  color: 0xFFD700
 
 # X/Twitter no longer offers free native RSS. Public RSSHub for twitter is
 # unreliable (needs auth). Left here disabled — to turn it on, point `url` at a

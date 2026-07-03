@@ -48,12 +48,18 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 HEADERS = {"User-Agent": UA, "Accept": "*/*"}
 
 DRY_RUN = os.environ.get("DRY_RUN", "").strip() not in ("", "0", "false", "False")
+DIGEST = os.environ.get("DIGEST", "").strip() not in ("", "0", "false", "False")
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "").strip()
 MAX_PER_RUN = int(os.environ.get("MAX_PER_RUN", "8"))
 PING_ROLE_ID = os.environ.get("PING_ROLE_ID", "").strip()
 KEEP_IDS = 300     # how many recent item-ids to remember per source
 KEEP_DEDUP = 500   # how many recent content-keys to remember globally
-DEDUP_KEY = "__dedup__"  # reserved state key (never a source name)
+KEEP_DIGEST = 120  # how many recent posts to keep for the daily digest
+# Reserved state keys (never a source name).
+DEDUP_KEY = "__dedup__"
+CODES_MSG_KEY = "__codes_msg__"    # discord message id of the live "active codes" card
+CODES_LIST_KEY = "__codes__"       # last-seen active code set (skip needless edits)
+DIGEST_LOG_KEY = "__digest_log__"  # rolling log of posts for the daily digest
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")  # display times in Vietnam time
 
@@ -248,6 +254,13 @@ def save_state(state):
 def fetch_rss(url):
     """Return newest-first list of dict(id,title,link,summary,thumb,ts)."""
     resp = requests.get(url, headers=HEADERS, timeout=30)
+    # Reddit throttles shared cloud IPs (429). A couple of short retries help it
+    # squeeze through on some runs; if it still fails the source is optional.
+    for _ in range(2):
+        if resp.status_code != 429:
+            break
+        time.sleep(4)
+        resp = requests.get(url, headers=HEADERS, timeout=30)
     resp.raise_for_status()
     parsed = feedparser.parse(resp.content)
     items = []
@@ -345,17 +358,20 @@ def fetch(src):
 
 
 def apply_filters(items, src):
-    """Keep only items whose title passes the source's include/exclude regex
-    (used to strip noise, e.g. Reddit memes/megathreads from the NEWS feed)."""
-    inc, exc = src.get("include"), src.get("exclude")
-    if not inc and not exc:
+    """Keep only items whose title passes the source's regex rules:
+      include — must match to be considered at all (stay on-topic)
+      keep    — whitelist that OVERRIDES exclude (real news beats guide-noise)
+      exclude — drop as noise, unless `keep` already rescued it
+    Used to de-noise busy feeds (Google News guides/tier-lists, Reddit memes)."""
+    inc, keep, exc = src.get("include"), src.get("keep"), src.get("exclude")
+    if not (inc or keep or exc):
         return items
     kept = []
     for it in items:
         title = it.get("title") or ""
         if inc and not re.search(inc, title):
             continue
-        if exc and re.search(exc, title):
+        if exc and re.search(exc, title) and not (keep and re.search(keep, title)):
             continue
         kept.append(it)
     return kept
@@ -477,6 +493,150 @@ def post_discord(item, source):
     _send(payload, image_url=image)
 
 
+# ── active-codes tracker (a single, self-updating "live codes" message) ───────
+CODE_TOKEN_RE = re.compile(r"<strong>\s*([A-Za-z0-9]{4,20})\s*</strong>")
+
+
+def _codes_in(region):
+    out = []
+    for m in CODE_TOKEN_RE.finditer(region):
+        tok = m.group(1).strip()
+        if tok in CODE_STOP or tok in out:
+            continue
+        if re.search(r"\d", tok) or len(tok) >= 6:  # skip stray short words
+            out.append(tok)
+    return out
+
+
+def fetch_active_codes(url):
+    """Scrape the ACTIVE redeem codes (the section between the 'Active … Codes'
+    and 'Expired … Codes' headings). The page also mentions those phrases in its
+    table-of-contents, so we try every Active→Expired span and take the one that
+    actually contains the most codes — robust to intro/TOC noise."""
+    t = requests.get(url, headers=HEADERS, timeout=30).text
+    expireds = [m.start() for m in re.finditer(r"(?i)expired[^<]{0,15}codes", t)]
+    best = []
+    for a in re.finditer(r"(?i)active[^<]{0,15}codes", t):
+        end = min([x for x in expireds if x > a.start()] or [len(t)])
+        codes = _codes_in(t[a.start():end])
+        if len(codes) > len(best):
+            best = codes
+    return best
+
+
+def _webhook_post_get_id(payload):
+    """POST a webhook message and return its message id (needs ?wait=true)."""
+    payload.setdefault("username", "NTE News")
+    payload.setdefault("allowed_mentions", {"parse": []})
+    r = requests.post(WEBHOOK + "?wait=true", json=payload, timeout=30)
+    r.raise_for_status()
+    return r.json().get("id")
+
+
+def _webhook_edit(msg_id, payload):
+    """Edit a previous webhook message in place. False if it no longer exists."""
+    r = requests.patch(f"{WEBHOOK}/messages/{msg_id}", json=payload, timeout=30)
+    if r.status_code == 404:
+        return False
+    r.raise_for_status()
+    return True
+
+
+def codes_embed(codes, src):
+    now = dt.datetime.now(VN_TZ).strftime("%d/%m/%Y %H:%M")
+    body = "\n".join(f"🎁  **`{c}`**" for c in codes) or "_Hiện chưa có code nào._"
+    return {
+        "title": "🎁 Code NTE đang hoạt động",
+        "url": src.get("url"),
+        "color": int(src.get("color", 0xFFD700)),
+        "description": f"{body}\n\n[Cách nhập code ›]({src.get('url')})",
+        "footer": {"text": f"Nguồn: neverness.gg • cập nhật {now} (giờ VN)"},
+    }
+
+
+def update_codes_tracker(src, state):
+    """Maintain ONE live 'active codes' message: create it once, then edit it in
+    place whenever the code list changes (+ ping when a brand-new code appears)."""
+    codes = fetch_active_codes(src["url"])
+    prev = state.get(CODES_LIST_KEY, [])
+    msg_id = state.get(CODES_MSG_KEY)
+    changed = False
+
+    if not msg_id:
+        msg_id = _webhook_post_get_id({"embeds": [codes_embed(codes, src)]})
+        state[CODES_MSG_KEY] = msg_id
+        state[CODES_LIST_KEY] = codes
+        log(f"✓ codes card created (id={msg_id}) — PIN this message once")
+        return True
+
+    if set(codes) != set(prev):
+        if not _webhook_edit(msg_id, {"embeds": [codes_embed(codes, src)]}):
+            # message was deleted → recreate
+            state[CODES_MSG_KEY] = _webhook_post_get_id(
+                {"embeds": [codes_embed(codes, src)]})
+        new = [c for c in codes if c not in set(prev)]
+        if prev and new:  # real-time alert for genuinely new codes
+            lead = f"<@&{PING_ROLE_ID}> " if PING_ROLE_ID else ""
+            _send({"content": f"{lead}🎁 **Code NTE mới:** "
+                              + ", ".join(f"`{c}`" for c in new),
+                   "allowed_mentions": {"parse": [],
+                                        "roles": [PING_ROLE_ID] if PING_ROLE_ID else []}})
+            log(f"→ new-code alert: {', '.join(new)}")
+        state[CODES_LIST_KEY] = codes
+        changed = True
+        log(f"✓ codes updated: {len(codes)} active")
+    else:
+        log(f"· codes unchanged ({len(codes)} active)")
+    return changed
+
+
+# ── daily digest ─────────────────────────────────────────────────────────────
+def digest_record(item, source):
+    """One compact entry for the daily-digest log (VN-dated)."""
+    short = source["name"].split("—")[-1].strip() or source["name"]
+    return {
+        "t": item.get("title", "")[:120],
+        "u": item.get("link"),
+        "s": short,
+        "e": topic_emoji(item.get("title", "")),
+        "d": dt.datetime.now(VN_TZ).strftime("%Y-%m-%d"),
+    }
+
+
+def run_digest(state):
+    """Post a single round-up of everything published TODAY (VN date). Nothing
+    posted → nothing to summarise, so it stays quiet."""
+    today = dt.datetime.now(VN_TZ).strftime("%Y-%m-%d")
+    todays = [e for e in state.get(DIGEST_LOG_KEY, []) if e.get("d") == today]
+    if not todays:
+        log("digest: no items today — skipping")
+        return False
+
+    groups = {}
+    for e in todays:
+        groups.setdefault(e.get("s", "News"), []).append(e)
+
+    lines = []
+    for name, entries in groups.items():
+        lines.append(f"\n**{name}**")
+        for e in entries[:12]:
+            title = (e.get("t") or "").strip()
+            url = e.get("u")
+            lines.append(f"{e.get('e', '•')} [{title}]({url})" if url
+                         else f"{e.get('e', '•')} {title}")
+
+    dd = dt.datetime.now(VN_TZ).strftime("%d/%m/%Y")
+    embed = {
+        "title": f"📰 Tổng hợp NTE hôm nay — {dd}",
+        "description": "\n".join(lines).strip()[:4000],
+        "color": 0x5865F2,
+        "footer": {"text": f"{len(todays)} tin • Neverness to Everness • auto-digest"},
+    }
+    _send({"embeds": [embed]})
+    log(f"→ digest posted: {len(todays)} items")
+    return True
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 def main():
     if not DRY_RUN and not WEBHOOK:
@@ -488,10 +648,22 @@ def main():
     posted_total = 0
     changed = False
 
+    # Daily-digest mode (its own scheduled run): summarise today's posts and stop.
+    if DIGEST:
+        if DRY_RUN:
+            todays = [e for e in state.get(DIGEST_LOG_KEY, [])
+                      if e.get("d") == dt.datetime.now(VN_TZ).strftime("%Y-%m-%d")]
+            log(f"[dry] digest would summarise {len(todays)} item(s) today")
+            return
+        if run_digest(state):
+            save_state(state)
+        return
+
     # Global content-keys already posted (across ALL sources) — the same story
     # aggregated by Google News, neverness.gg and PW official now posts once.
     dedup_list = state.get(DEDUP_KEY, [])
     dedup_set = set(dedup_list)
+    digest_log = state.get(DIGEST_LOG_KEY, [])
 
     def try_post(it, src, tag=""):
         """Post an item unless its story was already posted by another source.
@@ -505,6 +677,7 @@ def main():
             if k not in dedup_set:
                 dedup_set.add(k)
                 dedup_list.append(k)
+        digest_log.append(digest_record(it, src))
         time.sleep(1.0)  # be gentle with the webhook
         log(f"→ posted{tag} [{src['name']}] {it['title']}")
         return True
@@ -513,6 +686,20 @@ def main():
         name = src["name"]
         if src.get("enabled") is False:
             log(f"— skip (disabled): {name}")
+            continue
+
+        # The live "active codes" card is maintained separately (edit-in-place),
+        # not posted as a normal feed item.
+        if src.get("type") == "codes_tracker":
+            try:
+                if DRY_RUN:
+                    codes = fetch_active_codes(src["url"])
+                    log(f"\n=== {name}: {len(codes)} active codes ===\n"
+                        f"   {', '.join(codes) or '—'}")
+                elif update_codes_tracker(src, state):
+                    changed = True
+            except Exception as ex:
+                log(f"! {name}: codes tracker failed: {ex}")
             continue
 
         try:
@@ -566,6 +753,7 @@ def main():
 
     if not DRY_RUN and changed:
         state[DEDUP_KEY] = dedup_list[-KEEP_DEDUP:]
+        state[DIGEST_LOG_KEY] = digest_log[-KEEP_DIGEST:]
         save_state(state)
     log(f"\nDone. Posted {posted_total} new item(s).")
 
