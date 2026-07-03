@@ -532,8 +532,11 @@ def post_discord(item, source):
     if source.get("video"):
         link = normalize_youtube(item["link"])
         header = f"{emoji} **{item['title']}**".strip()
+        vi = translate_vi(item["title"]) if source.get("translate", True) else None
+        vi_line = f"\n🇻🇳 {vi}" if vi else ""
         lead = f"{ping}\n" if ping else ""
-        payload = {"content": f"{lead}{header}\n{link}"[:2000]}
+        # link stays on its own last line so Discord renders the player
+        payload = {"content": f"{lead}{header}{vi_line}\n{link}"[:2000]}
         if mentions:
             payload["allowed_mentions"] = mentions
         _send(payload)
@@ -733,9 +736,17 @@ def run_digest(state):
         lines.append(f"\n**{name}**")
         for e in entries[:12]:
             title = (e.get("t") or "").strip()
+            vi = translate_vi(title)           # Vietnamese-first headlines
             url = e.get("u")
-            lines.append(f"{e.get('e', '•')} [{title}]({url})" if url
-                         else f"{e.get('e', '•')} {title}")
+            label = vi or title
+            lines.append(f"{e.get('e', '•')} [{label}]({url})" if url
+                         else f"{e.get('e', '•')} {label}")
+
+    # One-stop: remind readers of the codes that are live right now.
+    codes = state.get(CODES_LIST_KEY, [])
+    if codes:
+        lines.append("\n**🎁 Code đang hoạt động**")
+        lines.append(" ".join(f"`{c}`" for c in codes[:20]))
 
     dd = dt.datetime.now(VN_TZ).strftime("%d/%m/%Y")
     embed = {
