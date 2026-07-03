@@ -45,6 +45,10 @@ jobs:
           # Optional: set repo variable PING_ROLE_ID to @-ping a role on
           # important news (new codes / maintenance / banners). Empty = no ping.
           PING_ROLE_ID: ${{ vars.PING_ROLE_ID }}
+          # Optional: Reddit app creds → reliable Reddit/leaks (no 429). Without
+          # them the bot falls back to anonymous RSS (often throttled on cloud).
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           # Manual-run knobs (default to a normal run when scheduled).
           DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
           SEED_POST: ${{ inputs.seed_post || '0' }}
