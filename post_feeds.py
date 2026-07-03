@@ -381,13 +381,81 @@ def fetch_pw(url):
     return items
 
 
+# ── reddit via official OAuth (reliable — anonymous cloud IPs get 429/403) ────
+REDDIT_UA = "web:nte-news-bot:1.1 (by /u/Megalit2578)"
+_reddit_token = None
+
+
+def _reddit_token_get():
+    """App-only (client_credentials) token, or None if no creds are configured."""
+    global _reddit_token
+    if _reddit_token:
+        return _reddit_token
+    cid = os.environ.get("REDDIT_CLIENT_ID", "").strip()
+    sec = os.environ.get("REDDIT_CLIENT_SECRET", "").strip()
+    if not (cid and sec):
+        return None
+    r = requests.post("https://www.reddit.com/api/v1/access_token",
+                      data={"grant_type": "client_credentials"},
+                      auth=(cid, sec), headers={"User-Agent": REDDIT_UA}, timeout=20)
+    r.raise_for_status()
+    _reddit_token = r.json().get("access_token")
+    return _reddit_token
+
+
+def parse_reddit_json(payload):
+    """Turn a Reddit listing JSON into our item dicts."""
+    items = []
+    for child in payload.get("data", {}).get("children", []):
+        d = child.get("data", {})
+        ts = (dt.datetime.fromtimestamp(d["created_utc"], tz=dt.timezone.utc)
+              if d.get("created_utc") else None)
+        img = None
+        try:
+            img = html.unescape(d["preview"]["images"][0]["source"]["url"])
+        except Exception:
+            img = d.get("thumbnail") if str(d.get("thumbnail", "")).startswith("http") else None
+        items.append({
+            "id": d.get("name") or d.get("id") or d.get("permalink"),
+            "title": (d.get("title") or "(no title)").strip(),
+            "link": "https://www.reddit.com" + d.get("permalink", ""),
+            "summary": (d.get("selftext") or "")[:600],
+            "image": img,
+            "ts": ts,
+            "publisher": None,
+        })
+    return items
+
+
+def fetch_reddit(sub):
+    """Newest posts of a subreddit through authenticated OAuth (no 429s)."""
+    token = _reddit_token_get()
+    if not token:
+        raise RuntimeError("no reddit creds")   # caller falls back to anon RSS
+    r = requests.get(f"https://oauth.reddit.com/r/{sub}/new?limit=25",
+                     headers={"Authorization": f"bearer {token}",
+                              "User-Agent": REDDIT_UA}, timeout=25)
+    r.raise_for_status()
+    return parse_reddit_json(r.json())
+
+
+_REDDIT_SUB_RE = re.compile(r"reddit\.com/r/([^/]+)", re.I)
+
+
 def fetch(src):
     t = src.get("type")
     if t == "pw_scrape":
         return fetch_pw(src["url"])
     if t == "steam_news":
         return fetch_steam(src["appid"])
-    return fetch_rss(src["url"])
+    url = src["url"]
+    m = _REDDIT_SUB_RE.search(url)
+    if m and os.environ.get("REDDIT_CLIENT_ID"):
+        try:
+            return fetch_reddit(m.group(1))      # reliable path when creds exist
+        except Exception as ex:
+            log(f"· reddit oauth failed ({ex}); falling back to RSS")
+    return fetch_rss(url)
 
 
 def apply_filters(items, src):
@@ -763,6 +831,10 @@ def main():
             for it in items[:3]:
                 when = it["ts"].date().isoformat() if it["ts"] else "—"
                 log(f"   • [{when}] {it['title']}  <{it['link']}>")
+                if src.get("translate", True) and not src.get("video"):
+                    vi = translate_vi(it["title"])
+                    if vi:
+                        log(f"       🇻🇳 {vi}")
             continue
 
         ids_now = [it["id"] for it in items]

@@ -70,6 +70,18 @@ Edit `feeds.yml`:
 Most sites: try `https://SITE/feed/` or `/rss`. YouTube channel RSS is
 `https://www.youtube.com/feeds/videos.xml?channel_id=UC...`.
 
+### Reliable Reddit & leaks (optional)
+Anonymous Reddit gets rate-limited (429/403) from cloud IPs, so `r/NTELeaks`
+loads only intermittently. For a rock-solid feed, add a free Reddit app:
+1. https://www.reddit.com/prefs/apps → **create app** → type **script** →
+   redirect URI `http://localhost` → create.
+2. Copy the **client id** (under the app name) and **secret**.
+3. Repo **Settings → Secrets and variables → Actions → New repository secret**:
+   `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET`.
+
+With those set the bot fetches Reddit through authenticated OAuth (no throttling);
+without them it just falls back to anonymous RSS.
+
 ### About X/Twitter
 X removed free RSS. The `X — @NTE_GL` entry is disabled by default. To enable it,
 point its `url` at an RSSHub or Nitter instance you trust and set `enabled: true`.
