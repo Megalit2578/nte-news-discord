@@ -36,6 +36,7 @@
   color: 0xC9F500
   emoji: "📘"
   icon: "https://neverness.gg/wp-content/uploads/sites/88/2025/12/Neverness-to-Everness-Icon-300x300.jpg"
+  og_image: true   # use the wide banner image → embed renders full-width
 
 # X/Twitter no longer offers free native RSS. Public RSSHub for twitter is
 # unreliable (needs auth). Left here disabled — to turn it on, point `url` at a

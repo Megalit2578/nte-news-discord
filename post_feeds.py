@@ -128,6 +128,18 @@ def clean_summary(text, limit=480):
     return text
 
 
+def fetch_og_image(url):
+    """The article's og:image — usually a WIDE banner, so the embed renders
+    at full width instead of tall-and-thin. Returns None on any failure."""
+    try:
+        text = requests.get(url, headers=HEADERS, timeout=20).text
+        m = (re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)', text, re.I)
+             or re.search(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']', text, re.I))
+        return m.group(1).strip() if m and m.group(1).strip() else None
+    except Exception:
+        return None
+
+
 def load_state():
     try:
         return json.loads(STATE_PATH.read_text("utf-8"))
@@ -258,7 +270,12 @@ def post_discord(item, source):
                        "value": f"[Mở bài viết ›]({item['link']})", "inline": True})
     embed["fields"] = fields
 
-    image = item.get("image") or source.get("default_image")
+    # Prefer a wide og:image banner (fills the embed width) over a portrait
+    # inline image that leaves the embed tall and narrow.
+    image = None
+    if source.get("og_image") and item.get("link"):
+        image = fetch_og_image(item["link"])
+    image = image or item.get("image") or source.get("default_image")
     if image:
         embed["image"] = {"url": image}
 
