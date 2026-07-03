@@ -94,6 +94,40 @@ def extract_image(entry):
     return m.group(1) if m else None
 
 
+# A topical emoji so each post reads at a glance and feels lively.
+TOPIC_EMOJI = [
+    (r"build|guide|team|comp|kit", "🔥"),
+    (r"banner|gacha|pull|wish|rate", "🎰"),
+    (r"code|redeem|reward|gift|voucher", "🎁"),
+    (r"maintenance|server|hotfix|patch|update|version|v?\d+\.\d+", "🛠️"),
+    (r"event|festival|celebrat", "🎉"),
+    (r"notice|account|action|ban|penal", "📢"),
+    (r"showcase|character|trailer|preview|teaser|reveal|impression", "✨"),
+    (r"tier|meta|ranking|best", "📊"),
+    (r"launch|release|out now|steam|epic", "🚀"),
+]
+
+
+def topic_emoji(title):
+    t = (title or "").lower()
+    for pat, emo in TOPIC_EMOJI:
+        if re.search(pat, t):
+            return emo
+    return "📰"
+
+
+def clean_summary(text, limit=480):
+    """Readable description: drop tags + WordPress 'The post … appeared first' junk."""
+    text = re.sub(r"<[^>]+>", " ", text or "")
+    text = html.unescape(text)
+    text = re.sub(r"(?is)\bthe post\b.*?\bappeared first on\b.*$", "", text)
+    text = text.replace("[…]", " ").replace("[&hellip;]", " ")
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > limit:
+        text = text[:limit].rsplit(" ", 1)[0].rstrip(" ,;:.") + " …"
+    return text
+
+
 def load_state():
     try:
         return json.loads(STATE_PATH.read_text("utf-8"))
@@ -196,22 +230,37 @@ def post_discord(item, source):
         _send({"content": f"{header}\n{link}"[:2000]})
         return
 
-    # Everything else: a clean rich embed with a big image when available.
+    # Everything else: a clean, wide rich embed with a big image.
+    short_src = source["name"].split("—")[-1].strip() or source["name"]
     embed = {
-        "title": item["title"][:256],
+        "title": f'{topic_emoji(item["title"])} {item["title"]}'[:256],
         "url": item["link"] or None,
         "color": int(source.get("color", 0x5865F2)),
         "author": {"name": f'{emoji} {source["name"]}'.strip()[:256]},
-        "footer": {"text": "Neverness to Everness"},
+        "footer": {"text": "Neverness to Everness • auto-news"},
     }
-    desc = strip_html(item.get("summary"))
+    if source.get("icon"):
+        embed["author"]["icon_url"] = source["icon"]
+
+    desc = clean_summary(item.get("summary"))
     if desc:
         embed["description"] = desc
+
+    # A row of inline fields — informative AND it forces the embed to widen,
+    # filling that empty horizontal space instead of staying thin.
+    fields = []
+    if item.get("ts"):
+        fields.append({"name": "📅 Đăng lúc",
+                       "value": item["ts"].strftime("%d/%m/%Y"), "inline": True})
+    fields.append({"name": "📡 Nguồn", "value": short_src, "inline": True})
+    if item.get("link"):
+        fields.append({"name": "🔗 Chi tiết",
+                       "value": f"[Mở bài viết ›]({item['link']})", "inline": True})
+    embed["fields"] = fields
+
     image = item.get("image") or source.get("default_image")
     if image:
         embed["image"] = {"url": image}
-    if item.get("ts"):
-        embed["timestamp"] = item["ts"].isoformat()
 
     _send({"embeds": [embed]})
 

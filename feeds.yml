@@ -20,12 +20,14 @@
   url: "https://nte.perfectworld.com/en/article/news/index.html"
   color: 0x00C2FF
   emoji: "🌐"
+  icon: "https://nte.perfectworld.com/public/images/icon.png"
 
 - name: "Reddit — r/NevernessToEverness"
   type: rss
   url: "https://www.reddit.com/r/NevernessToEverness/.rss"
   color: 0xFF4500
   emoji: "👽"
+  icon: "https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png"
   optional: true   # reddit sometimes rate-limits cloud IPs
 
 - name: "Community — neverness.gg"
@@ -33,6 +35,7 @@
   url: "https://neverness.gg/feed/"
   color: 0xC9F500
   emoji: "📘"
+  icon: "https://neverness.gg/wp-content/uploads/sites/88/2025/12/Neverness-to-Everness-Icon-300x300.jpg"
 
 # X/Twitter no longer offers free native RSS. Public RSSHub for twitter is
 # unreliable (needs auth). Left here disabled — to turn it on, point `url` at a
