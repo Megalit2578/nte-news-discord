@@ -49,6 +49,7 @@ HEADERS = {"User-Agent": UA, "Accept": "*/*"}
 
 DRY_RUN = os.environ.get("DRY_RUN", "").strip() not in ("", "0", "false", "False")
 DIGEST = os.environ.get("DIGEST", "").strip() not in ("", "0", "false", "False")
+TRANSLATE = os.environ.get("TRANSLATE", "1").strip() not in ("0", "false", "False")
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "").strip()
 MAX_PER_RUN = int(os.environ.get("MAX_PER_RUN", "8"))
 PING_ROLE_ID = os.environ.get("PING_ROLE_ID", "").strip()
@@ -224,6 +225,38 @@ def content_keys(item):
     if len(nt) >= 12:  # too-short titles collide by accident; skip them
         keys.append("t:" + nt)
     return keys
+
+
+_tr_cache = {}
+
+
+def translate_vi(text):
+    """Translate to Vietnamese via the free Google Translate endpoint (no key).
+    Returns None if translation is off, fails, is empty, or the text is already
+    Vietnamese — so callers can safely fall back to the original."""
+    if not TRANSLATE:
+        return None
+    text = (text or "").strip()
+    if not text:
+        return None
+    if text in _tr_cache:
+        return _tr_cache[text]
+    result = None
+    try:
+        r = requests.get(
+            "https://translate.googleapis.com/translate_a/single",
+            params={"client": "gtx", "sl": "auto", "tl": "vi", "dt": "t", "q": text},
+            headers=HEADERS, timeout=15)
+        if r.ok:
+            d = r.json()
+            vi = "".join(seg[0] for seg in d[0] if seg and seg[0]).strip()
+            src = d[2] if len(d) > 2 else ""
+            if vi and src != "vi" and vi.lower() != text.lower():
+                result = vi
+    except Exception:
+        result = None
+    _tr_cache[text] = result
+    return result
 
 
 def fetch_og_image(url):
@@ -445,9 +478,14 @@ def post_discord(item, source):
     if outlet and outlet.lower() not in author_name.lower():
         author_name = f"{author_name} · {outlet}"
 
+    # Vietnamese-first: translate the headline (and summary) for VN readers,
+    # keeping the English original underneath. Falls back cleanly on failure.
+    en_title = item["title"]
+    vi_title = translate_vi(en_title) if source.get("translate", True) else None
+
     now_vn = dt.datetime.now(VN_TZ).strftime("%H:%M")
     embed = {
-        "title": f'{topic_emoji(item["title"])} {item["title"]}'[:256],
+        "title": f'{topic_emoji(en_title)} {vi_title or en_title}'[:256],
         "url": item["link"] or None,
         "color": int(source.get("color", 0x5865F2)),
         "author": {"name": author_name[:256]},
@@ -457,8 +495,14 @@ def post_discord(item, source):
         embed["author"]["icon_url"] = source["icon"]
 
     desc = clean_summary(item.get("summary"))
-    if desc:
-        embed["description"] = desc
+    vi_desc = translate_vi(desc) if (desc and source.get("translate", True)) else None
+    parts = []
+    if vi_title:                       # show the original English for reference
+        parts.append(f"*{en_title}*")
+    if vi_desc or desc:
+        parts.append(vi_desc or desc)
+    if parts:
+        embed["description"] = "\n\n".join(parts)[:4096]
 
     fields = []
     # Redeem codes, if any, get a prominent full-width field at the top.

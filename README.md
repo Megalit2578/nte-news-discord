@@ -34,6 +34,10 @@ isn't flooded with old articles. From then on, only genuinely new items appear.
 - **Smart de-noise** — `include` (stay on-topic) / `exclude` (drop guide &
   tier-list SEO spam) / `keep` (real news like codes/patches/banners overrides
   `exclude`). Google News goes from ~95 noisy hits to real news only.
+- **Vietnamese auto-translation** — English headlines/summaries are translated
+  to Vietnamese (free Google Translate, no key). The VN title leads, the English
+  original is kept underneath. Turn off with env `TRANSLATE=0`, or per source
+  with `translate: false`. Already-Vietnamese text is left as-is.
 - **Vietnam time** — post times shown as `dd/mm/YYYY HH:MM` (Asia/Ho_Chi_Minh).
 
 ### Optional: @-ping on important news
