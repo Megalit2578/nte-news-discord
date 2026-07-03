@@ -1,0 +1,5 @@
+# Keep LF in the repo so the GitHub Actions (Ubuntu) shell script runs cleanly.
+* text=auto eol=lf
+*.py  text eol=lf
+*.yml text eol=lf
+*.md  text eol=lf
