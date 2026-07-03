@@ -85,7 +85,7 @@
   # Real news ALWAYS passes (beats the exclude below)…
   keep:    '(?i)\b(code|redeem|maintenance|hotfix|patch|update|version|banner|event|launch|release|leak|nerf|buff|compensat|announce|anniversary|collab|revenue|delay|server|down)\b'
   # …but strip the evergreen guide/tier-list/reroll SEO spam that isn't news.
-  exclude: '(?i)(tier ?list|reroll|best (build|team)|beginner|how to get|team comp|walkthrough|\bfarm(ing)?\b|\btips\b|wiki|voice actor|fishing|dailies|city tycoon|\bcafe\b|materials|ascension|\bfons\b|reset time|worth (pulling|it)|should you|guide)'
+  exclude: '(?i)(tier ?list|reroll|\bbuild\b|best (build|team)|beginner|how to (get|play|beat)|team comp|walkthrough|\bfarm(ing)?\b|\btips\b|wiki|voice actor|fishing|dailies|city tycoon|\bcafe\b|materials|ascension|\bfons\b|reset time|worth (pulling|it)|should (you|i)|\bguide\b)'
 
 # Live "Active codes" card: the bot scrapes the current working codes and keeps
 # ONE message updated in place (edits it when codes change; pings on brand-new
