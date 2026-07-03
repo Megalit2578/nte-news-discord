@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# NTE news sources → Discord.  Add/remove as many as you want — NO limit.
+#
+#   type: rss        → any RSS/Atom feed URL
+#   type: pw_scrape  → the official Perfect World news index (HTML, no RSS)
+#   color:           → embed side-color (hex)
+#   enabled: false   → keep it in the file but skip it
+#   optional: true   → a fetch failure is ignored quietly (no noise)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "YouTube — NTE Global"
+  type: rss
+  url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCIc-uir_VVR8D2RlUyP29Aw"
+  color: 0xFF0000
+
+- name: "Official — Perfect World"
+  type: pw_scrape
+  url: "https://nte.perfectworld.com/en/article/news/index.html"
+  color: 0x00C2FF
+
+- name: "Reddit — r/NevernessToEverness"
+  type: rss
+  url: "https://www.reddit.com/r/NevernessToEverness/.rss"
+  color: 0xFF4500
+  optional: true   # reddit sometimes rate-limits cloud IPs
+
+- name: "Community — neverness.gg"
+  type: rss
+  url: "https://neverness.gg/feed/"
+  color: 0xC9F500
+
+# X/Twitter no longer offers free native RSS. Public RSSHub for twitter is
+# unreliable (needs auth). Left here disabled — to turn it on, point `url` at a
+# working RSSHub or Nitter instance you trust, then set `enabled: true`.
+- name: "X — @NTE_GL"
+  type: rss
+  url: "https://rsshub.app/twitter/user/NTE_GL"
+  color: 0x1DA1F2
+  enabled: false
+  optional: true
