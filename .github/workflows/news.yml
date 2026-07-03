@@ -3,7 +3,16 @@ name: NTE News → Discord
 on:
   schedule:
     - cron: "*/30 * * * *"     # every 30 min (UTC). Change freely.
-  workflow_dispatch: {}         # lets you run it by hand from the Actions tab
+  workflow_dispatch:            # lets you run it by hand from the Actions tab
+    inputs:
+      dry_run:
+        description: "Dry run — parse feeds and print, post NOTHING"
+        type: boolean
+        default: false
+      seed_post:
+        description: "Post the N latest per NEW source (demo/test). 0 = normal"
+        type: string
+        default: "0"
 
 concurrency:
   group: nte-news
@@ -31,6 +40,9 @@ jobs:
           # Optional: set repo variable PING_ROLE_ID to @-ping a role on
           # important news (new codes / maintenance / banners). Empty = no ping.
           PING_ROLE_ID: ${{ vars.PING_ROLE_ID }}
+          # Manual-run knobs (default to a normal run when scheduled).
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+          SEED_POST: ${{ inputs.seed_post || '0' }}
         run: python post_feeds.py
 
       - name: Persist seen-state
