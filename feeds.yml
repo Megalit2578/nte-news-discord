@@ -31,6 +31,9 @@
   color: 0x00C2FF
   emoji: "🌐"
   icon: "https://nte.perfectworld.com/public/images/icon.png"
+  # PW notices carry no image → fall back to the official NTE key-art banner
+  # so the post isn't a bare block of text.
+  default_image: &nte_banner "https://nte.perfectworld.com/public/images/share_en.jpg"
 
 # Official Steam "Community Announcements" (patch notes, events, maintenance).
 # Uses the ISteamNews API because the store RSS 404s until launch (8 Jul 2026).
@@ -53,6 +56,7 @@
   # (memes mention "1.2"), so those terms are intentionally excluded.
   include: '(?i)\b(code|redeem|patch ?notes?|maintenance|hotfix|official|datamine|leak(ed|s)?|announce(d|ment)?|drop ?rate|tier ?list|new banner|new character|nerf|buff)\b'
   exclude: '(?i)megathread|daily thread|weekly question|free ?talk|rate my|cosplay'
+  default_image: *nte_banner   # only used when the post itself has no image
 
 # Dedicated NTE leaks subreddit (beta/datamine/upcoming banners & characters).
 # Optional because Reddit sometimes rate-limits cloud IPs; light filter keeps it
@@ -65,6 +69,7 @@
   optional: true
   include: '(?i)\b(leak(ed|s)?|beta|datamine[d]?|drip ?marketing|prefarm|upcoming|new (character|unit|banner|arc|weapon)|banner|version|v?\d+\.\d+|kit|skill|roadmap|schedule|silhouette|teaser)\b'
   exclude: '(?i)megathread|daily|weekly|moderator|announcement|rule|meme|fan ?art|cosplay|discussion thread|question'
+  default_image: *nte_banner
 
 - name: "Community — neverness.gg"
   type: rss
@@ -86,6 +91,8 @@
   keep:    '(?i)\b(code|redeem|maintenance|hotfix|patch|update|version|banner|event|launch|release|leak|nerf|buff|compensat|announce|anniversary|collab|revenue|delay|server|down)\b'
   # …but strip the evergreen guide/tier-list/reroll SEO spam that isn't news.
   exclude: '(?i)(tier ?list|reroll|\bbuild\b|best (build|team)|beginner|how to (get|play|beat)|team comp|walkthrough|\bfarm(ing)?\b|\btips\b|wiki|voice actor|fishing|dailies|city tycoon|\bcafe\b|materials|ascension|\bfons\b|reset time|worth (pulling|it)|should (you|i)|\bguide\b)'
+  # Google links are opaque (no fetchable image) → always show the NTE banner.
+  default_image: *nte_banner
 
 # Live "Active codes" card: the bot scrapes the current working codes and keeps
 # ONE message updated in place (edits it when codes change; pings on brand-new
