@@ -29,6 +29,11 @@
   emoji: "👽"
   icon: "https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png"
   optional: true   # reddit sometimes rate-limits cloud IPs
+  # r/ is mostly memes/chit-chat — keep only genuine news (leaks, codes,
+  # patch notes, official announcements). Version numbers alone aren't enough
+  # (memes mention "1.2"), so those terms are intentionally excluded.
+  include: '(?i)\b(code|redeem|patch ?notes?|maintenance|hotfix|official|datamine|leak(ed|s)?|announce(d|ment)?|drop ?rate|tier ?list|new banner|new character|nerf|buff)\b'
+  exclude: '(?i)megathread|daily thread|weekly question|free ?talk|rate my|cosplay'
 
 - name: "Community — neverness.gg"
   type: rss
@@ -37,6 +42,15 @@
   emoji: "📘"
   icon: "https://neverness.gg/wp-content/uploads/sites/88/2025/12/Neverness-to-Everness-Icon-300x300.jpg"
   og_image: true   # use the wide banner image → embed renders full-width
+
+# Google News — aggregates pro coverage (IGN, PC Gamer, AUTOMATON, Mobalytics…).
+# Strong signal for a NEWS channel. Links redirect to the real articles.
+- name: "Google News — NTE"
+  type: rss
+  url: "https://news.google.com/rss/search?q=%22Neverness%20to%20Everness%22%20when%3A30d&hl=en-US&gl=US&ceid=US:en"
+  color: 0x4285F4
+  emoji: "🗞️"
+  include: '(?i)neverness|\bNTE\b'   # drop tangential articles that only mention NTE in passing
 
 # X/Twitter no longer offers free native RSS. Public RSSHub for twitter is
 # unreliable (needs auth). Left here disabled — to turn it on, point `url` at a

@@ -95,16 +95,18 @@ def extract_image(entry):
 
 
 # A topical emoji so each post reads at a glance and feels lively.
+# Order matters — most specific topics first, generic "guide" last.
 TOPIC_EMOJI = [
-    (r"build|guide|team|comp|kit", "🔥"),
-    (r"banner|gacha|pull|wish|rate", "🎰"),
     (r"code|redeem|reward|gift|voucher", "🎁"),
-    (r"maintenance|server|hotfix|patch|update|version|v?\d+\.\d+", "🛠️"),
+    (r"maintenance|hotfix|patch ?notes?|server", "🛠️"),
+    (r"banner|gacha|pull|wish|rate ?up", "🎰"),
     (r"event|festival|celebrat", "🎉"),
-    (r"notice|account|action|ban|penal", "📢"),
-    (r"showcase|character|trailer|preview|teaser|reveal|impression", "✨"),
-    (r"tier|meta|ranking|best", "📊"),
+    (r"notice|account|action|\bban\b|penal", "📢"),
     (r"launch|release|out now|steam|epic", "🚀"),
+    (r"showcase|character|trailer|preview|teaser|reveal|impression", "✨"),
+    (r"tier|meta|ranking|nerf|buff", "📊"),
+    (r"update|version|v?\d+\.\d+", "🚀"),
+    (r"build|guide|team|comp|kit|best", "🔥"),
 ]
 
 
@@ -217,6 +219,23 @@ def fetch(src):
     return fetch_rss(src["url"])
 
 
+def apply_filters(items, src):
+    """Keep only items whose title passes the source's include/exclude regex
+    (used to strip noise, e.g. Reddit memes/megathreads from the NEWS feed)."""
+    inc, exc = src.get("include"), src.get("exclude")
+    if not inc and not exc:
+        return items
+    kept = []
+    for it in items:
+        title = it.get("title") or ""
+        if inc and not re.search(inc, title):
+            continue
+        if exc and re.search(exc, title):
+            continue
+        kept.append(it)
+    return kept
+
+
 # ── discord ──────────────────────────────────────────────────────────────────
 def _send(payload, image_url=None):
     """Send a webhook message. If image_url is given, the image is uploaded as
@@ -324,8 +343,9 @@ def main():
             log(f"{level} {name}: fetch failed: {ex}")
             continue  # one bad source never kills the run
 
+        items = apply_filters(items, src)
         if not items:
-            log(f"· {name}: 0 items")
+            log(f"· {name}: 0 items (after filter)")
             continue
 
         if DRY_RUN:
