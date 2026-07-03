@@ -154,6 +154,23 @@ def clean_summary(text, limit=480):
     return text
 
 
+def _alnum(s):
+    """Lowercase, alnum-only, single-spaced — for loose text comparison."""
+    return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
+
+
+def is_title_echo(summary, title):
+    """True when a 'summary' carries no real information beyond the headline.
+    Google News (and some feeds) set the summary to just the linked title +
+    publisher, so rendering it as a description merely repeats the title. We
+    detect that so those posts don't show a redundant/empty body."""
+    d, t = _alnum(summary), _alnum(title)
+    if not d:
+        return True
+    # d is often "<title> <publisher>" (or vice-versa) → one contains the other.
+    return d == t or d.startswith(t) or t.startswith(d)
+
+
 # Topics that are worth an @-role ping (opt-in via PING_ROLE_ID).
 IMPORTANT_RE = re.compile(
     r"(?i)\b(codes?|redeem|giftcodes?|maintenance|hotfix|patch ?notes?|"
@@ -565,12 +582,18 @@ def post_discord(item, source):
     if source.get("icon"):
         embed["author"]["icon_url"] = source["icon"]
 
+    # REAL body only: a feed summary that just echoes the headline (Google News
+    # and other aggregators do this) adds nothing, so we drop it instead of
+    # repeating the title. neverness.gg / Steam carry genuine excerpts and pass.
     desc = clean_summary(item.get("summary"))
+    if is_title_echo(desc, en_title):
+        desc = ""
+
     vi_desc = translate_vi(desc) if (desc and source.get("translate", True)) else None
     parts = []
-    if vi_title:                       # show the original English for reference
+    if vi_title:                       # show the original English headline for reference
         parts.append(f"*{en_title}*")
-    if vi_desc or desc:
+    if vi_desc or desc:                # the real article excerpt, if any
         parts.append(vi_desc or desc)
     if parts:
         embed["description"] = "\n\n".join(parts)[:4096]
@@ -657,51 +680,69 @@ def _webhook_edit(msg_id, payload):
     return True
 
 
-def codes_embed(codes, src):
+def codes_embed(codes, src, new_codes=None):
     now = dt.datetime.now(VN_TZ).strftime("%d/%m/%Y %H:%M")
-    body = "\n".join(f"🎁  **`{c}`**" for c in codes) or "_Hiện chưa có code nào._"
+    new_set = set(new_codes or [])
+    # brand-new codes float to the top with a ✨ badge so they stand out
+    ordered = [c for c in codes if c in new_set] + [c for c in codes if c not in new_set]
+    lines = [f"{'✨' if c in new_set else '🎁'}  **`{c}`**"
+             + ("  ← mới" if c in new_set else "") for c in ordered]
+    body = "\n".join(lines) or "_Hiện chưa có code nào._"
+    intro = ""
+    if new_set:
+        intro = "🆕 **Code mới:** " + ", ".join(f"`{c}`" for c in new_codes) + "\n\n"
     return {
         "title": "🎁 Code NTE đang hoạt động",
         "url": src.get("url"),
         "color": int(src.get("color", 0xFFD700)),
-        "description": f"{body}\n\n[Cách nhập code ›]({src.get('url')})",
-        "footer": {"text": f"Nguồn: neverness.gg • cập nhật {now} (giờ VN)"},
+        "description": f"{intro}{body}\n\n[Cách nhập code ›]({src.get('url')})",
+        # 'kiểm tra' = last CHECK time, refreshed every run → visibly live even
+        # when the code list itself hasn't changed.
+        "footer": {"text": f"Nguồn: neverness.gg • {len(codes)} code đang hoạt động "
+                           f"• tự động kiểm tra {now} (giờ VN)"},
     }
 
 
 def update_codes_tracker(src, state):
-    """Maintain ONE live 'active codes' message: create it once, then edit it in
-    place whenever the code list changes (+ ping when a brand-new code appears)."""
+    """Maintain ONE live 'active codes' message. The card is re-rendered on EVERY
+    run so its 'last checked' time stays current (proves it's alive), the message
+    is recreated if it was deleted, and a @-ping fires only for brand-new codes."""
     codes = fetch_active_codes(src["url"])
     prev = state.get(CODES_LIST_KEY, [])
     msg_id = state.get(CODES_MSG_KEY)
+    new = [c for c in codes if c not in set(prev)] if prev else []
     changed = False
 
+    embed = codes_embed(codes, src, new_codes=new)
+
     if not msg_id:
-        msg_id = _webhook_post_get_id({"embeds": [codes_embed(codes, src)]})
-        state[CODES_MSG_KEY] = msg_id
+        state[CODES_MSG_KEY] = _webhook_post_get_id({"embeds": [embed]})
         state[CODES_LIST_KEY] = codes
-        log(f"✓ codes card created (id={msg_id}) — PIN this message once")
+        log(f"✓ codes card created (id={state[CODES_MSG_KEY]}) — PIN this message once")
         return True
 
+    # Refresh the card in place every run. If it 404s (someone deleted it), make
+    # a fresh one — this now happens even when the code list is unchanged, so a
+    # missing card always self-heals.
+    if not _webhook_edit(msg_id, {"embeds": [embed]}):
+        state[CODES_MSG_KEY] = _webhook_post_get_id({"embeds": [embed]})
+        log(f"✓ codes card recreated (id={state[CODES_MSG_KEY]}) — PIN this message once")
+        changed = True
+
+    if new:  # real-time alert only for genuinely new codes
+        lead = f"<@&{PING_ROLE_ID}> " if PING_ROLE_ID else ""
+        _send({"content": f"{lead}🎁 **Code NTE mới:** "
+                          + ", ".join(f"`{c}`" for c in new),
+               "allowed_mentions": {"parse": [],
+                                    "roles": [PING_ROLE_ID] if PING_ROLE_ID else []}})
+        log(f"→ new-code alert: {', '.join(new)}")
+
     if set(codes) != set(prev):
-        if not _webhook_edit(msg_id, {"embeds": [codes_embed(codes, src)]}):
-            # message was deleted → recreate
-            state[CODES_MSG_KEY] = _webhook_post_get_id(
-                {"embeds": [codes_embed(codes, src)]})
-        new = [c for c in codes if c not in set(prev)]
-        if prev and new:  # real-time alert for genuinely new codes
-            lead = f"<@&{PING_ROLE_ID}> " if PING_ROLE_ID else ""
-            _send({"content": f"{lead}🎁 **Code NTE mới:** "
-                              + ", ".join(f"`{c}`" for c in new),
-                   "allowed_mentions": {"parse": [],
-                                        "roles": [PING_ROLE_ID] if PING_ROLE_ID else []}})
-            log(f"→ new-code alert: {', '.join(new)}")
         state[CODES_LIST_KEY] = codes
         changed = True
         log(f"✓ codes updated: {len(codes)} active")
     else:
-        log(f"· codes unchanged ({len(codes)} active)")
+        log(f"· codes unchanged ({len(codes)} active) — card refreshed")
     return changed
 
 
