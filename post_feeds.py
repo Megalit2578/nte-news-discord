@@ -218,11 +218,30 @@ def fetch(src):
 
 
 # ── discord ──────────────────────────────────────────────────────────────────
-def _send(payload):
+def _send(payload, image_url=None):
+    """Send a webhook message. If image_url is given, the image is uploaded as
+    an ATTACHMENT (renders bigger/wider than an embed image) below the embed."""
     payload.setdefault("username", "NTE News")
     payload.setdefault("allowed_mentions", {"parse": []})
+
+    attach = None
+    if image_url:
+        try:
+            resp = requests.get(image_url, headers=HEADERS, timeout=30)
+            ct = resp.headers.get("content-type", "").split(";")[0]
+            if resp.ok and ct.startswith("image"):
+                ext = {"image/png": "png", "image/webp": "webp",
+                       "image/gif": "gif"}.get(ct, "jpg")
+                attach = (f"news.{ext}", resp.content, ct)
+        except Exception:
+            attach = None
+
     for _ in range(5):
-        r = requests.post(WEBHOOK, json=payload, timeout=30)
+        if attach:
+            r = requests.post(WEBHOOK, data={"payload_json": json.dumps(payload)},
+                              files={"file": attach}, timeout=60)
+        else:
+            r = requests.post(WEBHOOK, json=payload, timeout=30)
         if r.status_code == 429:
             time.sleep(float(r.json().get("retry_after", 2)) + 0.5)
             continue
@@ -270,16 +289,15 @@ def post_discord(item, source):
                        "value": f"[Mở bài viết ›]({item['link']})", "inline": True})
     embed["fields"] = fields
 
-    # Prefer a wide og:image banner (fills the embed width) over a portrait
-    # inline image that leaves the embed tall and narrow.
+    # Prefer a wide og:image banner over a portrait inline image, then attach
+    # it as a big image UNDER the embed (attachments render wider than embed
+    # images → the card looks large and fills the max width Discord allows).
     image = None
     if source.get("og_image") and item.get("link"):
         image = fetch_og_image(item["link"])
     image = image or item.get("image") or source.get("default_image")
-    if image:
-        embed["image"] = {"url": image}
 
-    _send({"embeds": [embed]})
+    _send({"embeds": [embed]}, image_url=image)
 
 
 # ── main ─────────────────────────────────────────────────────────────────────
