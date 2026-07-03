@@ -17,7 +17,8 @@ isn't flooded with old articles. From then on, only genuinely new items appear.
 
 ## Features
 - **Sources**: YouTube (playable inline), official Perfect World page, official
-  **Steam** announcements, Reddit, neverness.gg, Google News (pro coverage).
+  **Steam** announcements, Reddit, **r/NTELeaks** (leaks), neverness.gg,
+  Google News (pro coverage).
 - **Cross-source de-dup** — the same story reported by several feeds is posted
   **once** (matched by URL + normalized title), by whichever source is listed
   first in `feeds.yml`. Keep the most authoritative sources near the top.
@@ -25,8 +26,15 @@ isn't flooded with old articles. From then on, only genuinely new items appear.
   (IGN, AUTOMATON, …) instead of an opaque aggregator name.
 - **Redeem-code detection** — codes found in a post get a prominent `🎁 Code`
   field (`` `NTE2026` ``), and can trigger an @-role ping (see below).
+- **Live "active codes" card** (`type: codes_tracker`) — scrapes the current
+  working codes and keeps **one message** updated in place; pings when a
+  brand-new code appears. Pin the message it creates.
+- **Daily digest** — at **20:00 Vietnam time** it posts one round-up of
+  everything published that day (grouped by source). Quiet on empty days.
+- **Smart de-noise** — `include` (stay on-topic) / `exclude` (drop guide &
+  tier-list SEO spam) / `keep` (real news like codes/patches/banners overrides
+  `exclude`). Google News goes from ~95 noisy hits to real news only.
 - **Vietnam time** — post times shown as `dd/mm/YYYY HH:MM` (Asia/Ho_Chi_Minh).
-- **Keyword filters** — per-source `include` / `exclude` regex to strip noise.
 
 ### Optional: @-ping on important news
 Set a repository **variable** (not secret) `PING_ROLE_ID` to the Discord role id

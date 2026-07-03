@@ -2,7 +2,8 @@ name: NTE News → Discord
 
 on:
   schedule:
-    - cron: "*/30 * * * *"     # every 30 min (UTC). Change freely.
+    - cron: "*/30 * * * *"     # poll feeds every 30 min (UTC)
+    - cron: "0 13 * * *"       # daily digest at 20:00 Vietnam time (13:00 UTC)
   workflow_dispatch:            # lets you run it by hand from the Actions tab
     inputs:
       dry_run:
@@ -13,6 +14,10 @@ on:
         description: "Post the N latest per NEW source (demo/test). 0 = normal"
         type: string
         default: "0"
+      digest:
+        description: "Post the daily digest now (summary of today's news)"
+        type: boolean
+        default: false
 
 concurrency:
   group: nte-news
@@ -43,6 +48,8 @@ jobs:
           # Manual-run knobs (default to a normal run when scheduled).
           DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
           SEED_POST: ${{ inputs.seed_post || '0' }}
+          # Daily-digest mode: on the 13:00-UTC cron, or when run by hand with digest=true.
+          DIGEST: ${{ (github.event.schedule == '0 13 * * *' || inputs.digest) && '1' || '' }}
         run: python post_feeds.py
 
       - name: Persist seen-state
