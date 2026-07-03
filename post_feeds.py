@@ -63,6 +63,37 @@ def strip_html(text, limit=350):
     return text
 
 
+YT_SHORTS_RE = re.compile(r"/shorts/([A-Za-z0-9_-]+)")
+
+
+def normalize_youtube(link):
+    """/shorts/ID → /watch?v=ID so Discord always shows a playable player."""
+    m = YT_SHORTS_RE.search(link or "")
+    return f"https://www.youtube.com/watch?v={m.group(1)}" if m else link
+
+
+def extract_image(entry):
+    """Best representative image URL from an RSS entry, or None."""
+    best, best_w = None, -1
+    for mc in (entry.get("media_content") or []):
+        u, w = mc.get("url"), int(mc.get("width") or 0)
+        if u and w >= best_w:
+            best, best_w = u, w
+    for mt in (entry.get("media_thumbnail") or []):
+        u, w = mt.get("url"), int(mt.get("width") or 0)
+        if u and w >= best_w:
+            best, best_w = u, w
+    if best:
+        return best
+    for l in (entry.get("links") or []):
+        if l.get("rel") == "enclosure" and str(l.get("type", "")).startswith("image"):
+            return l.get("href")
+    blob = entry["content"][0].get("value", "") if entry.get("content") else ""
+    blob = blob or entry.get("summary", "")
+    m = re.search(r'<img[^>]+src="([^"]+)"', blob)
+    return m.group(1) if m else None
+
+
 def load_state():
     try:
         return json.loads(STATE_PATH.read_text("utf-8"))
@@ -85,10 +116,6 @@ def fetch_rss(url):
     for e in parsed.entries:
         link = e.get("link") or ""
         eid = e.get("id") or e.get("guid") or link or e.get("title")
-        thumb = None
-        mt = e.get("media_thumbnail") or []
-        if mt:
-            thumb = mt[0].get("url")
         ts = None
         for key in ("published_parsed", "updated_parsed"):
             if e.get(key):
@@ -99,7 +126,7 @@ def fetch_rss(url):
             "title": (e.get("title") or "(no title)").strip(),
             "link": link,
             "summary": e.get("summary") or e.get("description") or "",
-            "thumb": thumb,
+            "image": extract_image(e),
             "ts": ts,
         })
     return items
@@ -145,22 +172,9 @@ def fetch(src):
 
 
 # ── discord ──────────────────────────────────────────────────────────────────
-def post_discord(item, source):
-    embed = {
-        "title": item["title"][:256],
-        "url": item["link"] or None,
-        "color": int(source.get("color", 0x5865F2)),
-        "footer": {"text": f'NTE • {source["name"]}'},
-    }
-    desc = strip_html(item["summary"])
-    if desc:
-        embed["description"] = desc
-    if item.get("thumb"):
-        embed["thumbnail"] = {"url": item["thumb"]}
-    if item.get("ts"):
-        embed["timestamp"] = item["ts"].isoformat()
-
-    payload = {"embeds": [embed], "allowed_mentions": {"parse": []}}
+def _send(payload):
+    payload.setdefault("username", "NTE News")
+    payload.setdefault("allowed_mentions", {"parse": []})
     for _ in range(5):
         r = requests.post(WEBHOOK, json=payload, timeout=30)
         if r.status_code == 429:
@@ -169,6 +183,37 @@ def post_discord(item, source):
         r.raise_for_status()
         return
     raise RuntimeError("Discord kept rate-limiting")
+
+
+def post_discord(item, source):
+    emoji = source.get("emoji", "")
+
+    # Video sources: post the link as message content so Discord renders a
+    # PLAYABLE inline player (rich embeds never play video). Shorts → watch.
+    if source.get("video"):
+        link = normalize_youtube(item["link"])
+        header = f"{emoji} **{item['title']}**".strip()
+        _send({"content": f"{header}\n{link}"[:2000]})
+        return
+
+    # Everything else: a clean rich embed with a big image when available.
+    embed = {
+        "title": item["title"][:256],
+        "url": item["link"] or None,
+        "color": int(source.get("color", 0x5865F2)),
+        "author": {"name": f'{emoji} {source["name"]}'.strip()[:256]},
+        "footer": {"text": "Neverness to Everness"},
+    }
+    desc = strip_html(item.get("summary"))
+    if desc:
+        embed["description"] = desc
+    image = item.get("image") or source.get("default_image")
+    if image:
+        embed["image"] = {"url": image}
+    if item.get("ts"):
+        embed["timestamp"] = item["ts"].isoformat()
+
+    _send({"embeds": [embed]})
 
 
 # ── main ─────────────────────────────────────────────────────────────────────

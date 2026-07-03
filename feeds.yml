@@ -12,22 +12,27 @@
   type: rss
   url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCIc-uir_VVR8D2RlUyP29Aw"
   color: 0xFF0000
+  emoji: "🎬"
+  video: true        # post as a link → Discord shows a PLAYABLE inline player
 
 - name: "Official — Perfect World"
   type: pw_scrape
   url: "https://nte.perfectworld.com/en/article/news/index.html"
   color: 0x00C2FF
+  emoji: "🌐"
 
 - name: "Reddit — r/NevernessToEverness"
   type: rss
   url: "https://www.reddit.com/r/NevernessToEverness/.rss"
   color: 0xFF4500
+  emoji: "👽"
   optional: true   # reddit sometimes rate-limits cloud IPs
 
 - name: "Community — neverness.gg"
   type: rss
   url: "https://neverness.gg/feed/"
   color: 0xC9F500
+  emoji: "📘"
 
 # X/Twitter no longer offers free native RSS. Public RSSHub for twitter is
 # unreliable (needs auth). Left here disabled — to turn it on, point `url` at a
