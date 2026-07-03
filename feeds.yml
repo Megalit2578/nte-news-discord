@@ -3,9 +3,16 @@
 #
 #   type: rss        → any RSS/Atom feed URL
 #   type: pw_scrape  → the official Perfect World news index (HTML, no RSS)
+#   type: steam_news → official Steam announcements (needs `appid:`)
 #   color:           → embed side-color (hex)
 #   enabled: false   → keep it in the file but skip it
 #   optional: true   → a fetch failure is ignored quietly (no noise)
+#   include/exclude: → regex on the title to keep / drop items (de-noise)
+#   ping: false      → never @-ping for this source (see PING_ROLE_ID)
+#
+# The bot de-duplicates ACROSS sources by story (url + normalized title), so the
+# same news picked up by several feeds is posted only once — by whichever source
+# appears FIRST below. Keep the most authoritative sources near the top.
 # ─────────────────────────────────────────────────────────────────────────────
 
 - name: "YouTube — NTE Global"
@@ -21,6 +28,15 @@
   color: 0x00C2FF
   emoji: "🌐"
   icon: "https://nte.perfectworld.com/public/images/icon.png"
+
+# Official Steam "Community Announcements" (patch notes, events, maintenance).
+# Uses the ISteamNews API because the store RSS 404s until launch (8 Jul 2026).
+- name: "Steam — NTE"
+  type: steam_news
+  appid: 4508340
+  color: 0x1B2838
+  emoji: "🎮"
+  icon: "https://store.steampowered.com/favicon.ico"
 
 - name: "Reddit — r/NevernessToEverness"
   type: rss

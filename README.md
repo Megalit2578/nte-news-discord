@@ -15,6 +15,27 @@ Runs on **GitHub Actions** every 30 minutes (24/7, even when your PC is off).
 On the **first** run each source is *seeded* silently (no post) so the channel
 isn't flooded with old articles. From then on, only genuinely new items appear.
 
+## Features
+- **Sources**: YouTube (playable inline), official Perfect World page, official
+  **Steam** announcements, Reddit, neverness.gg, Google News (pro coverage).
+- **Cross-source de-dup** — the same story reported by several feeds is posted
+  **once** (matched by URL + normalized title), by whichever source is listed
+  first in `feeds.yml`. Keep the most authoritative sources near the top.
+- **Real publisher byline** — Google News / Steam items show the actual outlet
+  (IGN, AUTOMATON, …) instead of an opaque aggregator name.
+- **Redeem-code detection** — codes found in a post get a prominent `🎁 Code`
+  field (`` `NTE2026` ``), and can trigger an @-role ping (see below).
+- **Vietnam time** — post times shown as `dd/mm/YYYY HH:MM` (Asia/Ho_Chi_Minh).
+- **Keyword filters** — per-source `include` / `exclude` regex to strip noise.
+
+### Optional: @-ping on important news
+Set a repository **variable** (not secret) `PING_ROLE_ID` to the Discord role id
+you want mentioned when a post is important (new codes, maintenance, banners,
+launch). Leave it unset for **no pings** (default).
+GitHub: **Settings → Secrets and variables → Actions → Variables → New variable**
+→ name `PING_ROLE_ID`, value = the role id (right-click a role → *Copy Role ID*,
+Developer Mode on). Silence a source with `ping: false` in `feeds.yml`.
+
 ## Setup (one-time)
 1. In Discord: channel **#neverness-to-everness → Edit → Integrations →
    Webhooks → New Webhook → Copy Webhook URL**.
@@ -27,11 +48,12 @@ isn't flooded with old articles. From then on, only genuinely new items appear.
 Edit `feeds.yml`:
 ```yaml
 - name: "My source"
-  type: rss                 # or: pw_scrape (official Perfect World page)
+  type: rss                 # rss | pw_scrape (PW page) | steam_news (needs appid)
   url:  "https://.../feed/"
   color: 0x00C2FF
   enabled: true             # set false to pause it
   optional: true            # ignore fetch errors quietly
+  ping: false               # (optional) never @-ping for this source
 ```
 Most sites: try `https://SITE/feed/` or `/rss`. YouTube channel RSS is
 `https://www.youtube.com/feeds/videos.xml?channel_id=UC...`.

@@ -13,6 +13,8 @@ Environment variables:
   DRY_RUN=1         parse feeds and print what WOULD be posted; touches neither
                     Discord nor the saved state (great for local testing)
   MAX_PER_RUN=8     safety cap on posts per source per run (default 8)
+  PING_ROLE_ID=…    optional: Discord role id to @-ping on IMPORTANT news
+                    (new codes, maintenance, banners, launch). No ping if unset.
 """
 
 import os
@@ -23,7 +25,8 @@ import time
 import html
 import pathlib
 import datetime as dt
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
+from zoneinfo import ZoneInfo
 
 import requests
 import feedparser
@@ -47,11 +50,25 @@ HEADERS = {"User-Agent": UA, "Accept": "*/*"}
 DRY_RUN = os.environ.get("DRY_RUN", "").strip() not in ("", "0", "false", "False")
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "").strip()
 MAX_PER_RUN = int(os.environ.get("MAX_PER_RUN", "8"))
-KEEP_IDS = 300  # how many recent item-ids to remember per source
+PING_ROLE_ID = os.environ.get("PING_ROLE_ID", "").strip()
+KEEP_IDS = 300     # how many recent item-ids to remember per source
+KEEP_DEDUP = 500   # how many recent content-keys to remember globally
+DEDUP_KEY = "__dedup__"  # reserved state key (never a source name)
+
+VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")  # display times in Vietnam time
 
 
 def log(*a):
     print(*a, flush=True)
+
+
+def fmt_vn(ts):
+    """UTC/aware datetime → 'dd/mm/YYYY HH:MM' in Vietnam time, or '' if none."""
+    if not ts:
+        return ""
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=dt.timezone.utc)
+    return ts.astimezone(VN_TZ).strftime("%d/%m/%Y %H:%M")
 
 
 def strip_html(text, limit=350):
@@ -130,6 +147,79 @@ def clean_summary(text, limit=480):
     return text
 
 
+# Topics that are worth an @-role ping (opt-in via PING_ROLE_ID).
+IMPORTANT_RE = re.compile(
+    r"(?i)\b(codes?|redeem|giftcodes?|maintenance|hotfix|patch ?notes?|"
+    r"banners?|launch|release|out now|drop ?rate|compensat)\b")
+
+
+def is_important(title):
+    return bool(IMPORTANT_RE.search(title or ""))
+
+
+# Words that look like codes but aren't — never surface these as "codes".
+CODE_STOP = {
+    "NEVERNESS", "EVERNESS", "HETHEREAU", "STEAM", "HTTPS", "HTML", "REDEEM",
+    "CODES", "CODE", "GIFT", "GIFTCODE", "PATCH", "NOTES", "UPDATE", "GLOBAL",
+    "OFFICIAL", "REWARD", "REWARDS", "SERVER", "GAMES", "TWITCH", "GEFORCE",
+}
+CODE_RE = re.compile(r"\b([A-Z][A-Z0-9]{4,19})\b")
+
+
+def extract_codes(title, summary):
+    """Best-effort redeem-code extraction. Only runs when the text is clearly
+    about codes, so random ALL-CAPS words don't get mistaken for codes."""
+    text = f"{title} {summary}"
+    if not re.search(r"(?i)\b(code|redeem|giftcode|coupon)\b", text):
+        return []
+    codes, seen = [], set()
+    for tok in CODE_RE.findall(text):
+        if tok in CODE_STOP or tok in seen:
+            continue
+        # a real code usually has a digit, or is a longer coined word
+        if re.search(r"\d", tok) or len(tok) >= 7:
+            seen.add(tok)
+            codes.append(tok)
+    return codes[:6]
+
+
+# ── cross-source de-duplication ──────────────────────────────────────────────
+_SITE_SUFFIX = re.compile(r"\s*[|\-–—]\s*[^|\-–—]{1,40}$")  # " - IGN", " | PCGamer"
+
+
+def canon_url(link):
+    """Normalize a URL for dedup: drop scheme/query/fragment, www., trailing /."""
+    try:
+        p = urlsplit(link or "")
+        host = (p.netloc or "").lower().removeprefix("www.")
+        path = (p.path or "").rstrip("/")
+        return f"{host}{path}" if host else ""
+    except Exception:
+        return ""
+
+
+def norm_title(title):
+    """Normalize a headline for dedup: strip publisher suffix + punctuation."""
+    t = _SITE_SUFFIX.sub("", title or "")
+    t = re.sub(r"[^a-z0-9]+", " ", t.lower()).strip()
+    return t
+
+
+def content_keys(item):
+    """Keys identifying the underlying STORY, so the same news reported by
+    several sources posts only once. Google links are opaque, so the title
+    key does the heavy lifting there."""
+    keys = []
+    u = canon_url(item.get("link"))
+    # google-news redirect urls are per-aggregator, not per-story → skip them
+    if u and "news.google.com" not in u:
+        keys.append("u:" + u)
+    nt = norm_title(item.get("title"))
+    if len(nt) >= 12:  # too-short titles collide by accident; skip them
+        keys.append("t:" + nt)
+    return keys
+
+
 def fetch_og_image(url):
     """The article's og:image — usually a WIDE banner, so the embed renders
     at full width instead of tall-and-thin. Returns None on any failure."""
@@ -176,6 +266,38 @@ def fetch_rss(url):
             "summary": e.get("summary") or e.get("description") or "",
             "image": extract_image(e),
             "ts": ts,
+            # the real publisher (IGN, AUTOMATON…) for aggregators like Google News
+            "publisher": (e.get("source") or {}).get("title"),
+        })
+    return items
+
+
+# Steam BBCode image token → real CDN url.
+STEAM_CLAN = "https://clan.akamai.steamstatic.com/images/"
+
+
+def fetch_steam(appid):
+    """Official Steam 'Community Announcements' via the public ISteamNews API
+    (the store RSS feed 404s until a game is released)."""
+    api = ("https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/"
+           f"?appid={appid}&count=15&maxlength=600")
+    data = requests.get(api, headers=HEADERS, timeout=30).json()
+    items = []
+    for it in data.get("appnews", {}).get("newsitems", []):
+        body = it.get("contents", "") or ""
+        m = re.search(r"\[img\]([^\[]+)\[/img\]", body, re.I)
+        img = m.group(1).replace("{STEAM_CLAN_IMAGE}", STEAM_CLAN) if m else None
+        ts = None
+        if it.get("date"):
+            ts = dt.datetime.fromtimestamp(int(it["date"]), tz=dt.timezone.utc)
+        items.append({
+            "id": str(it.get("gid") or it.get("url")),
+            "title": (it.get("title") or "(no title)").strip(),
+            "link": it.get("url") or "",
+            "summary": re.sub(r"\[/?[^\]]+\]", " ", body),  # strip BBCode
+            "image": img,
+            "ts": ts,
+            "publisher": it.get("feedlabel"),
         })
     return items
 
@@ -214,8 +336,11 @@ def fetch_pw(url):
 
 
 def fetch(src):
-    if src.get("type") == "pw_scrape":
+    t = src.get("type")
+    if t == "pw_scrape":
         return fetch_pw(src["url"])
+    if t == "steam_news":
+        return fetch_steam(src["appid"])
     return fetch_rss(src["url"])
 
 
@@ -269,25 +394,48 @@ def _send(payload, image_url=None):
     raise RuntimeError("Discord kept rate-limiting")
 
 
+def ping_content(item, source):
+    """A '<@&role>' lead line when the news is important AND pinging is enabled
+    (PING_ROLE_ID set + the source didn't opt out). Empty string otherwise."""
+    if not (PING_ROLE_ID and source.get("ping", True)):
+        return "", None
+    codes = extract_codes(item["title"], item.get("summary"))
+    if not (codes or is_important(item["title"])):
+        return "", None
+    lead = "🎁 **Code mới!**" if codes else "📢 **Tin quan trọng!**"
+    return f"<@&{PING_ROLE_ID}> {lead}", {"parse": [], "roles": [PING_ROLE_ID]}
+
+
 def post_discord(item, source):
     emoji = source.get("emoji", "")
+    ping, mentions = ping_content(item, source)
 
     # Video sources: post the link as message content so Discord renders a
     # PLAYABLE inline player (rich embeds never play video). Shorts → watch.
     if source.get("video"):
         link = normalize_youtube(item["link"])
         header = f"{emoji} **{item['title']}**".strip()
-        _send({"content": f"{header}\n{link}"[:2000]})
+        lead = f"{ping}\n" if ping else ""
+        payload = {"content": f"{lead}{header}\n{link}"[:2000]}
+        if mentions:
+            payload["allowed_mentions"] = mentions
+        _send(payload)
         return
 
     # Everything else: a clean, wide rich embed with a big image.
     short_src = source["name"].split("—")[-1].strip() or source["name"]
+    outlet = (item.get("publisher") or "").strip()  # real byline for aggregators
+    author_name = f'{emoji} {source["name"]}'.strip()
+    if outlet and outlet.lower() not in author_name.lower():
+        author_name = f"{author_name} · {outlet}"
+
+    now_vn = dt.datetime.now(VN_TZ).strftime("%H:%M")
     embed = {
         "title": f'{topic_emoji(item["title"])} {item["title"]}'[:256],
         "url": item["link"] or None,
         "color": int(source.get("color", 0x5865F2)),
-        "author": {"name": f'{emoji} {source["name"]}'.strip()[:256]},
-        "footer": {"text": "Neverness to Everness • auto-news"},
+        "author": {"name": author_name[:256]},
+        "footer": {"text": f"Neverness to Everness • auto-news • {now_vn}"},
     }
     if source.get("icon"):
         embed["author"]["icon_url"] = source["icon"]
@@ -296,13 +444,19 @@ def post_discord(item, source):
     if desc:
         embed["description"] = desc
 
+    fields = []
+    # Redeem codes, if any, get a prominent full-width field at the top.
+    codes = extract_codes(item["title"], item.get("summary"))
+    if codes:
+        fields.append({"name": "🎁 Code",
+                       "value": " ".join(f"`{c}`" for c in codes), "inline": False})
+
     # A row of inline fields — informative AND it forces the embed to widen,
     # filling that empty horizontal space instead of staying thin.
-    fields = []
-    if item.get("ts"):
-        fields.append({"name": "📅 Đăng lúc",
-                       "value": item["ts"].strftime("%d/%m/%Y"), "inline": True})
-    fields.append({"name": "📡 Nguồn", "value": short_src, "inline": True})
+    when = fmt_vn(item.get("ts"))
+    if when:
+        fields.append({"name": "📅 Đăng lúc", "value": when, "inline": True})
+    fields.append({"name": "📡 Nguồn", "value": outlet or short_src, "inline": True})
     if item.get("link"):
         fields.append({"name": "🔗 Chi tiết",
                        "value": f"[Mở bài viết ›]({item['link']})", "inline": True})
@@ -316,7 +470,11 @@ def post_discord(item, source):
         image = fetch_og_image(item["link"])
     image = image or item.get("image") or source.get("default_image")
 
-    _send({"embeds": [embed]}, image_url=image)
+    payload = {"embeds": [embed]}
+    if ping:
+        payload["content"] = ping
+        payload["allowed_mentions"] = mentions
+    _send(payload, image_url=image)
 
 
 # ── main ─────────────────────────────────────────────────────────────────────
@@ -329,6 +487,27 @@ def main():
     state = load_state()
     posted_total = 0
     changed = False
+
+    # Global content-keys already posted (across ALL sources) — the same story
+    # aggregated by Google News, neverness.gg and PW official now posts once.
+    dedup_list = state.get(DEDUP_KEY, [])
+    dedup_set = set(dedup_list)
+
+    def try_post(it, src, tag=""):
+        """Post an item unless its story was already posted by another source.
+        Returns True if it went out, False if suppressed as a duplicate."""
+        keys = content_keys(it)
+        if any(k in dedup_set for k in keys):
+            log(f"⊘ dup{tag} [{src['name']}] {it['title']}")
+            return False
+        post_discord(it, src)
+        for k in keys:
+            if k not in dedup_set:
+                dedup_set.add(k)
+                dedup_list.append(k)
+        time.sleep(1.0)  # be gentle with the webhook
+        log(f"→ posted{tag} [{src['name']}] {it['title']}")
+        return True
 
     for src in sources:
         name = src["name"]
@@ -363,10 +542,8 @@ def main():
             # SEED_POST items (default 0) as a visible "it works" proof.
             seed_post = int(os.environ.get("SEED_POST", "0"))
             for it in reversed(items[:seed_post]):   # oldest of the batch first
-                post_discord(it, src)
-                posted_total += 1
-                time.sleep(1.0)
-                log(f"→ posted [seed] [{name}] {it['title']}")
+                if try_post(it, src, tag=" [seed]"):
+                    posted_total += 1
             state[name] = ids_now[:KEEP_IDS]
             changed = True
             log(f"✓ {name}: seeded {len(ids_now)} items "
@@ -380,16 +557,15 @@ def main():
             new_items = new_items[-MAX_PER_RUN:]
 
         for it in new_items:
-            post_discord(it, src)
-            posted_total += 1
-            time.sleep(1.0)  # be gentle with the webhook
-            log(f"→ posted [{name}] {it['title']}")
+            if try_post(it, src):
+                posted_total += 1
 
         merged = ids_now + [i for i in seen if i not in set(ids_now)]
         state[name] = merged[:KEEP_IDS]
         changed = True
 
     if not DRY_RUN and changed:
+        state[DEDUP_KEY] = dedup_list[-KEEP_DEDUP:]
         save_state(state)
     log(f"\nDone. Posted {posted_total} new item(s).")
 

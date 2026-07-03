@@ -28,6 +28,9 @@ jobs:
       - name: Poll feeds and post to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          # Optional: set repo variable PING_ROLE_ID to @-ping a role on
+          # important news (new codes / maintenance / banners). Empty = no ping.
+          PING_ROLE_ID: ${{ vars.PING_ROLE_ID }}
         run: python post_feeds.py
 
       - name: Persist seen-state
