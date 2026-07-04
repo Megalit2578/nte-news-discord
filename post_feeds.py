@@ -265,10 +265,11 @@ def translate_vi(text):
         return _tr_cache[text]
     result = None
     try:
-        r = requests.get(
+        # POST (q in the body) so long article text isn't capped by URL length.
+        r = requests.post(
             "https://translate.googleapis.com/translate_a/single",
-            params={"client": "gtx", "sl": "auto", "tl": "vi", "dt": "t", "q": text},
-            headers=HEADERS, timeout=15)
+            params={"client": "gtx", "sl": "auto", "tl": "vi", "dt": "t"},
+            data={"q": text}, headers=HEADERS, timeout=25)
         if r.ok:
             d = r.json()
             vi = "".join(seg[0] for seg in d[0] if seg and seg[0]).strip()
@@ -318,7 +319,8 @@ _CONTENT_CLASSES = ("articleContent", "article-content", "entry-content",
                     "post-content", "richtext")
 
 
-BODY_LIMIT = 1300   # how many chars of article text to show (a full summary)
+BODY_LIMIT = 2400        # chars of English article text to show (as full as fits)
+EMBED_TOTAL_MAX = 5800   # Discord caps ALL embed text in one message at 6000
 
 
 def _trafilatura_extract(raw, limit=BODY_LIMIT):
@@ -570,7 +572,7 @@ def fetch_steam(appid):
     """Official Steam 'Community Announcements' via the public ISteamNews API
     (the store RSS feed 404s until a game is released)."""
     api = ("https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/"
-           f"?appid={appid}&count=15&maxlength=600")
+           f"?appid={appid}&count=15&maxlength=3000")
     data = requests.get(api, headers=HEADERS, timeout=30).json()
     items = []
     for it in data.get("appnews", {}).get("newsitems", []):
@@ -832,21 +834,16 @@ def post_discord(item, source):
             og = clean_summary(og_desc or "", BODY_LIMIT)
             if og and not is_title_echo(og, en_title) and not _looks_generic(og):
                 desc = og
-    # Sources whose feed has no real summary (Perfect World notices) → pull the
-    # actual article text off the page so the post has concrete content.
-    if not desc and source.get("fetch_body") and link:
+    # `fetch_body` sources → pull the article's full text off the page and use it
+    # when it's richer than the feed excerpt (Perfect World has none; neverness.gg
+    # ships only a short excerpt). Gives the post the complete article, not a stub.
+    if source.get("fetch_body") and link:
         body = clean_summary(fetch_article_body(link) or "", BODY_LIMIT)
-        if body and not is_title_echo(body, en_title):
+        if body and not is_title_echo(body, en_title) and len(body) > len(desc):
             desc = body
 
-    parts = []
-    if desc:                           # the real English article excerpt, if any
-        parts.append(desc)
-    rv = vi_reveal(en_title, desc, source)   # 🇻🇳 spoiler — tap to translate
-    if rv:
-        parts.append(rv)
-    if parts:
-        embed["description"] = "\n\n".join(parts)[:4096]
+    if desc:                           # the full English article text
+        embed["description"] = desc[:4096]
 
     fields = []
     # Redeem codes, if any, get a prominent full-width field at the top.
@@ -866,19 +863,39 @@ def post_discord(item, source):
                        "value": f"[Mở bài viết ›]({link})", "inline": True})
     embed["fields"] = fields
 
-    # Prefer a wide og:image banner over a portrait inline image, then attach
-    # it as a big image UNDER the embed (attachments render wider than embed
-    # images → the card looks large and fills the max width Discord allows).
+    # A real, full-width image for the article (og:image / wide banner / source).
     image = resolved_image
     if not image and source.get("og_image") and item.get("link"):
         image = fetch_og_image(item["link"])
     image = image or item.get("image") or source.get("default_image")
+    if image:
+        embed["image"] = {"url": image}
 
-    payload = {"embeds": [embed]}
+    embeds = [embed]
+
+    # A SECOND embed holds the FULL Vietnamese translation behind a spoiler:
+    # English stays primary, the whole thing is one tap away, and the two embeds
+    # together stay under Discord's 6000-char per-message budget.
+    if source.get("translate", True):
+        vi_title = translate_vi(en_title)
+        vi_body = translate_vi(desc) if desc else None
+        vi_full = "\n\n".join(x for x in (vi_title, vi_body) if x)
+        if vi_full:
+            used = (len(embed.get("description", "")) + len(en_title) + 40
+                    + sum(len(f["name"]) + len(f["value"]) for f in fields))
+            label = "🇻🇳 **Tiếng Việt** — bấm để xem:\n"
+            room = EMBED_TOTAL_MAX - used - len(label) - 8
+            if room > 150:
+                if len(vi_full) > room:
+                    vi_full = vi_full[:room].rsplit(" ", 1)[0].rstrip(" ,;:.") + " …"
+                embeds.append({"color": int(source.get("color", 0x5865F2)),
+                               "description": label + _spoiler(vi_full)})
+
+    payload = {"embeds": embeds}
     if ping:
         payload["content"] = ping
         payload["allowed_mentions"] = mentions
-    _send(payload, image_url=image)
+    _send(payload)
 
 
 # ── active-codes tracker (a single, self-updating "live codes" message) ───────

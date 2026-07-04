@@ -79,7 +79,8 @@
   color: 0xC9F500
   emoji: "📘"
   icon: "https://neverness.gg/wp-content/uploads/sites/88/2025/12/Neverness-to-Everness-Icon-300x300.jpg"
-  og_image: true   # use the wide banner image → embed renders full-width
+  og_image: true     # use the wide banner image → embed renders full-width
+  fetch_body: true   # RSS ships only a short excerpt → pull the full article
 
 # Google News — aggregates pro coverage (IGN, PC Gamer, AUTOMATON, Mobalytics…).
 # Strong signal for a NEWS channel. Links redirect to the real articles.
