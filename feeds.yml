@@ -93,7 +93,9 @@
   # Real news ALWAYS passes (beats the exclude below)…
   keep:    '(?i)\b(code|redeem|maintenance|hotfix|patch|update|version|banner|event|launch|release|leak|nerf|buff|compensat|announce|anniversary|collab|revenue|delay|server|down)\b'
   # …but strip the evergreen guide/tier-list/reroll SEO spam that isn't news.
-  exclude: '(?i)(tier ?list|reroll|\bbuild\b|best (build|team)|beginner|how to (get|play|beat)|team comp|walkthrough|\bfarm(ing)?\b|\btips\b|wiki|voice actor|fishing|dailies|city tycoon|\bcafe\b|materials|ascension|\bfons\b|reset time|worth (pulling|it)|should (you|i)|\bguide\b)'
+  exclude: '(?i)(tier ?list|reroll|\bbuild\b|best (build|team)|beginner|how to (get|play|beat|unlock|solve|complete|find|use|farm)|unlock (every|all)|team comp|walkthrough|\bsolution\b|all (answers|solutions|locations|puzzles?)|\bpuzzle\b|\bfarm(ing)?\b|\btips\b|wiki|voice actor|fishing|dailies|city tycoon|\bcafe\b|materials|ascension|\bfons\b|reset time|worth (pulling|it)|should (you|i)|\bguide\b|explained|everything you need|\bhow to\b)'
+  # Outlets that only publish SEO guide/walkthrough spam for this game, never news.
+  block_publishers: ["IMDb", "Game8", "GamePretty", "Gamer Tweak", "Prima Games"]
   # Decode the opaque Google redirect → real article URL, then pull the article's
   # og:description (real body text) + og:image so the post has actual content,
   # not just a headline. Falls back to the NTE banner if decoding fails.

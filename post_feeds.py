@@ -123,28 +123,44 @@ def extract_image(entry):
     return m.group(1) if m else None
 
 
-# A topical emoji so each post reads at a glance and feels lively.
-# Order matters — most specific topics first, generic "guide" last.
-TOPIC_EMOJI = [
-    (r"code|redeem|reward|gift|voucher", "🎁"),
-    (r"maintenance|hotfix|patch ?notes?|server", "🛠️"),
-    (r"banner|gacha|pull|wish|rate ?up", "🎰"),
-    (r"event|festival|celebrat", "🎉"),
-    (r"notice|account|action|\bban\b|penal", "📢"),
-    (r"launch|release|out now|steam|epic", "🚀"),
-    (r"showcase|character|trailer|preview|teaser|reveal|impression", "✨"),
-    (r"tier|meta|ranking|nerf|buff", "📊"),
-    (r"update|version|v?\d+\.\d+", "🚀"),
-    (r"build|guide|team|comp|kit|best", "🔥"),
+# Classify each post by topic → (emoji, Vietnamese label, side-bar color).
+# Order matters: most specific first. Drives the title emoji, a badge line at
+# the top of the body, and the embed's color so each news TYPE looks distinct.
+CATEGORIES = [
+    (r"code|redeem|giftcode|coupon|voucher", "🎁", "CODE", 0xFFD700),
+    (r"maintenance|hotfix|patch ?notes?|server (down|maintenance)|downtime|đang bảo trì",
+     "🛠️", "BẢO TRÌ", 0xE67E22),
+    (r"banner|gacha|pull|wish|rate ?up|character trailer", "🎰", "BANNER", 0x9B59B6),
+    (r"leak|datamine|beta|prefarm|drip ?marketing|upcoming|silhouette",
+     "🔍", "LEAK", 0x1ABC9C),
+    (r"anniversary|festival|celebrat|collab(oration)?", "🎉", "SỰ KIỆN", 0xE91E63),
+    (r"launch|release|out now|available now|coming to (steam|epic|ps5|xbox|switch)|now (live|available)|steam",
+     "🚀", "RA MẮT", 0x2ECC71),
+    (r"compensat|refund|reward|gift", "🎁", "QUÀ TẶNG", 0xF1C40F),
+    (r"notice|account|\bban\b|penal|action against|violation", "📢", "THÔNG BÁO", 0xE74C3C),
+    (r"update|version|v?\d+\.\d+|new (content|chapter|arc|story)", "🆕", "CẬP NHẬT", 0x3498DB),
+    (r"revenue|sales|earnings|financial|profit|download|milestone|top ?grossing|chart",
+     "📊", "DOANH THU", 0xF39C12),
+    (r"nerf|buff|balance|tier|meta|ranking|rework", "⚖️", "CÂN BẰNG", 0x95A5A6),
+    (r"event", "🎉", "SỰ KIỆN", 0xE91E63),
+    (r"character|showcase|trailer|preview|teaser|reveal|new (unit|weapon|esper)",
+     "✨", "NHÂN VẬT", 0x00BCD4),
+    (r"interview|impression|review|opinion|hands-on|análise", "🗣️", "ĐÁNH GIÁ", 0x8E44AD),
 ]
 
 
-def topic_emoji(title):
+def classify(title):
+    """(emoji, Vietnamese category label, color) for a headline; a neutral
+    default when nothing matches."""
     t = (title or "").lower()
-    for pat, emo in TOPIC_EMOJI:
+    for pat, emo, label, color in CATEGORIES:
         if re.search(pat, t):
-            return emo
-    return "📰"
+            return emo, label, color
+    return "📰", "TIN TỨC", 0x5865F2
+
+
+def topic_emoji(title):
+    return classify(title)[0]
 
 
 def clean_summary(text, limit=480):
@@ -157,6 +173,38 @@ def clean_summary(text, limit=480):
     if len(text) > limit:
         text = text[:limit].rsplit(" ", 1)[0].rstrip(" ,;:.") + " …"
     return text
+
+
+def _chunk_text(text, size):
+    """Split text into pieces of at most `size` chars, breaking on paragraph
+    then sentence boundaries (only hard-splitting a single giant sentence), and
+    greedily packing so we use as few pieces as possible."""
+    text = (text or "").strip()
+    if len(text) <= size:
+        return [text] if text else []
+    units = []
+    for para in text.split("\n\n"):
+        if len(para) <= size:
+            units.append(para)
+            continue
+        for sent in re.split(r"(?<=[.!?…])\s+", para):
+            if len(sent) <= size:
+                units.append(sent)
+            else:
+                for k in range(0, len(sent), size):
+                    units.append(sent[k:k + size])
+    chunks, cur = [], ""
+    for u in units:
+        piece = ("\n\n" + u) if cur else u
+        if len(cur) + len(piece) <= size:
+            cur += piece
+        else:
+            if cur:
+                chunks.append(cur)
+            cur = u
+    if cur:
+        chunks.append(cur)
+    return chunks
 
 
 def _alnum(s):
@@ -265,16 +313,25 @@ def translate_vi(text):
         return _tr_cache[text]
     result = None
     try:
-        # POST (q in the body) so long article text isn't capped by URL length.
-        r = requests.post(
-            "https://translate.googleapis.com/translate_a/single",
-            params={"client": "gtx", "sl": "auto", "tl": "vi", "dt": "t"},
-            data={"q": text}, headers=HEADERS, timeout=25)
-        if r.ok:
+        # Translate in <=3500-char pieces (POST, so URL length is never the cap)
+        # and stitch them back together — lets us translate whole long articles.
+        pieces = _chunk_text(text, 3500) or [text]
+        parts, src0 = [], None
+        for i, piece in enumerate(pieces):
+            r = requests.post(
+                "https://translate.googleapis.com/translate_a/single",
+                params={"client": "gtx", "sl": "auto", "tl": "vi", "dt": "t"},
+                data={"q": piece}, headers=HEADERS, timeout=25)
+            if not r.ok:
+                parts = None
+                break
             d = r.json()
-            vi = "".join(seg[0] for seg in d[0] if seg and seg[0]).strip()
-            src = d[2] if len(d) > 2 else ""
-            if vi and src != "vi" and vi.lower() != text.lower():
+            parts.append("".join(seg[0] for seg in d[0] if seg and seg[0]))
+            if i == 0:
+                src0 = d[2] if len(d) > 2 else ""
+        if parts:
+            vi = "".join(parts).strip()
+            if vi and src0 != "vi" and vi.lower() != text.lower():
                 result = vi
     except Exception:
         result = None
@@ -319,7 +376,8 @@ _CONTENT_CLASSES = ("articleContent", "article-content", "entry-content",
                     "post-content", "richtext")
 
 
-BODY_LIMIT = 2400        # chars of English article text to show (as full as fits)
+BODY_LIMIT = 6000        # max chars of English article to keep (split across embeds)
+EMBED_DESC_MAX = 4000    # per-embed description budget (Discord hard cap 4096)
 EMBED_TOTAL_MAX = 5800   # Discord caps ALL embed text in one message at 6000
 
 
@@ -407,39 +465,92 @@ def _looks_generic(desc):
     return not desc or bool(_GENERIC_DESC_RE.search(desc))
 
 
-_og_cache = {}
+_page_cache = {}
 
 
-def fetch_og(url):
-    """Return (description, image_url) from a page in ONE request (cached).
-    og:description is the article's own SEO summary — usually the crisp main
-    point — so we prefer it. Only when it's missing or a generic site-wide blurb
-    (Perfect World reuses one tagline everywhere) do we fall back to the real
-    article body. Quote delimiters use a back-reference so an apostrophe
-    ("Don't") doesn't truncate. Either value may be None; on failure both are."""
-    if url in _og_cache:
-        return _og_cache[url]
-    result = (None, None)
+def _get_page(url):
+    """Fetch a page's raw bytes once and cache them, so text + images come from
+    a single request. None on failure."""
+    if url in _page_cache:
+        return _page_cache[url]
+    raw = None
     try:
         raw = requests.get(url, headers=HEADERS, timeout=25,
                            allow_redirects=True).content
+    except Exception:
+        raw = None
+    _page_cache[url] = raw
+    return raw
+
+
+def _meta(text, *pats):
+    for p in pats:
+        m = re.search(p, text, re.I | re.S)
+        if m and m.group(m.lastindex).strip():
+            return html.unescape(m.group(m.lastindex).strip())
+    return None
+
+
+# image URLs that are chrome, not article content
+_IMG_JUNK_RE = re.compile(
+    r"(?i)avatar|gravatar|/icon|-icon|logo|sprite|emoji|1x1|pixel|blank|spinner|"
+    r"loading|placeholder|/ads?[/_]|doubleclick|/badge|favicon|/thumb|-\d{2,3}x\d{2,3}\.")
+
+
+def _extract_images(text, base_url, lead=None, limit=4):
+    """Up to `limit` real content-image URLs: the og:image lead first, then
+    <img> sources inside the article container, skipping icons/avatars/ads."""
+    out, seen = [], set()
+
+    def add(u):
+        if not u or len(out) >= limit:
+            return
+        u = html.unescape(u.strip())
+        if u.startswith("//"):
+            u = "https:" + u
+        u = urljoin(base_url or "", u)
+        base = u.lower().split("?")[0]
+        if not u.startswith("http") or base.endswith(".svg") or _IMG_JUNK_RE.search(u):
+            return
+        if u in seen:
+            return
+        seen.add(u)
+        out.append(u)
+
+    add(lead)
+    region = text
+    for cls in _CONTENT_CLASSES:
+        m = re.search(rf'(?is)class="[^"]*{cls}[^"]*"[^>]*>(.*)', text)
+        if m:
+            region = m.group(1)
+            break
+    for m in re.finditer(r'<img[^>]+(?:data-src|data-lazy-src|src)=["\']([^"\']+)', region, re.I):
+        add(m.group(1))
+        if len(out) >= limit:
+            break
+    return out
+
+
+_article_cache = {}
+
+
+def fetch_article(url):
+    """(main_text, [image_urls]) for an article page from ONE cached fetch.
+    Text prefers real extracted body (trafilatura), then og:description, then a
+    regex body for sites whose og is a generic site-wide blurb."""
+    if url in _article_cache:
+        return _article_cache[url]
+    result = (None, [])
+    raw = _get_page(url)
+    if raw:
         text = raw.decode("utf-8", "replace")
-
-        def meta(*pats):
-            for p in pats:
-                m = re.search(p, text, re.I | re.S)
-                if m and m.group(m.lastindex).strip():
-                    return html.unescape(m.group(m.lastindex).strip())
-            return None
-
-        og_desc = meta(r'<meta[^>]+property=["\']og:description["\'][^>]+content=(["\'])(.*?)\1',
-                       r'<meta[^>]+name=["\']description["\'][^>]+content=(["\'])(.*?)\1',
-                       r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:description["\']')
-        image = meta(r'<meta[^>]+property=["\']og:image["\'][^>]+content=(["\'])(.*?)\1',
-                     r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:image["\']')
-        # Fuller, accurate content: prefer the real extracted article text; fall
-        # back to og:description (some sites paywall/JS-block extraction), and to
-        # the regex body only when og is a generic site-wide blurb.
+        og_desc = _meta(text,
+            r'<meta[^>]+property=["\']og:description["\'][^>]+content=(["\'])(.*?)\1',
+            r'<meta[^>]+name=["\']description["\'][^>]+content=(["\'])(.*?)\1',
+            r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:description["\']')
+        og_image = _meta(text,
+            r'<meta[^>]+property=["\']og:image["\'][^>]+content=(["\'])(.*?)\1',
+            r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:image["\']')
         article = _trafilatura_extract(raw)
         if article:
             desc = article
@@ -447,10 +558,8 @@ def fetch_og(url):
             desc = og_desc
         else:
             desc = _extract_body(text) or og_desc
-        result = (desc, image)
-    except Exception:
-        result = (None, None)
-    _og_cache[url] = result
+        result = (desc, _extract_images(text, url, og_image))
+    _article_cache[url] = result
     return result
 
 
@@ -496,24 +605,10 @@ def resolve_google_news(url):
     return real
 
 
-_body_cache = {}
-
-
-def fetch_article_body(url, limit=BODY_LIMIT):
-    """The main article text from a news page whose feed carries no real summary
-    (e.g. Perfect World official notices — maintenance, account actions, events).
-    Prefers trafilatura, falls back to the regex extractor. Cached; UTF-8 safe."""
-    if url in _body_cache:
-        return _body_cache[url]
-    body = None
-    try:
-        raw = requests.get(url, headers=HEADERS, timeout=20).content
-        body = _trafilatura_extract(raw, limit) or _extract_body(
-            raw.decode("utf-8", "replace"), limit)
-    except Exception:
-        body = None
-    _body_cache[url] = body
-    return body
+def fetch_article_body(url):
+    """The main article text for feeds with no real summary (Perfect World
+    notices, neverness.gg excerpts). Shares fetch_article's cached fetch."""
+    return fetch_article(url)[0]
 
 
 def load_state():
@@ -709,13 +804,18 @@ def apply_filters(items, src):
       include — must match to be considered at all (stay on-topic)
       keep    — whitelist that OVERRIDES exclude (real news beats guide-noise)
       exclude — drop as noise, unless `keep` already rescued it
+      block_publishers — drop items from these outlets (case-insensitive substr)
     Used to de-noise busy feeds (Google News guides/tier-lists, Reddit memes)."""
     inc, keep, exc = src.get("include"), src.get("keep"), src.get("exclude")
-    if not (inc or keep or exc):
+    block = [b.lower() for b in (src.get("block_publishers") or [])]
+    if not (inc or keep or exc or block):
         return items
     kept = []
     for it in items:
         title = it.get("title") or ""
+        pub = (it.get("publisher") or "").lower()
+        if block and any(b in pub for b in block):
+            continue
         if inc and not re.search(inc, title):
             continue
         if exc and re.search(exc, title) and not (keep and re.search(keep, title)):
@@ -808,13 +908,17 @@ def post_discord(item, source):
         if real and "news.google.com" not in real:
             link = real
 
+    # Classify by topic → title emoji, a category badge, and a per-type color so
+    # each kind of news (code / maintenance / banner / launch…) looks distinct.
+    cat_emoji, cat_label, cat_color = classify(en_title)
+    color = cat_color if cat_label != "TIN TỨC" else int(source.get("color", 0x5865F2))
     now_vn = dt.datetime.now(VN_TZ).strftime("%H:%M")
     embed = {
-        "title": f'{topic_emoji(en_title)} {en_title}'[:256],
+        "title": f'{cat_emoji} {en_title}'[:256],
         "url": link or None,
-        "color": int(source.get("color", 0x5865F2)),
+        "color": color,
         "author": {"name": author_name[:256]},
-        "footer": {"text": f"Neverness to Everness • auto-news • {now_vn}"},
+        "footer": {"text": f"{cat_emoji} {cat_label} • Neverness to Everness • {now_vn}"},
     }
     if source.get("icon"):
         embed["author"]["icon_url"] = source["icon"]
@@ -827,9 +931,8 @@ def post_discord(item, source):
     desc = clean_summary(item.get("summary"), BODY_LIMIT)
     if is_title_echo(desc, en_title):
         desc = ""
-    resolved_image = None
     if source.get("resolve_content") and link and "news.google.com" not in link:
-        og_desc, resolved_image = fetch_og(link)
+        og_desc, _ = fetch_article(link)
         if not desc:
             og = clean_summary(og_desc or "", BODY_LIMIT)
             if og and not is_title_echo(og, en_title) and not _looks_generic(og):
@@ -842,18 +945,13 @@ def post_discord(item, source):
         if body and not is_title_echo(body, en_title) and len(body) > len(desc):
             desc = body
 
-    if desc:                           # the full English article text
-        embed["description"] = desc[:4096]
-
     fields = []
     # Redeem codes, if any, get a prominent full-width field at the top.
     codes = extract_codes(item["title"], item.get("summary"))
     if codes:
         fields.append({"name": "🎁 Code",
                        "value": " ".join(f"`{c}`" for c in codes), "inline": False})
-
-    # A row of inline fields — informative AND it forces the embed to widen,
-    # filling that empty horizontal space instead of staying thin.
+    # A row of inline fields — informative AND it forces the embed to widen.
     when = fmt_vn(item.get("ts"))
     if when:
         fields.append({"name": "📅 Đăng lúc", "value": when, "inline": True})
@@ -861,41 +959,82 @@ def post_discord(item, source):
     if link:
         fields.append({"name": "🔗 Chi tiết",
                        "value": f"[Mở bài viết ›]({link})", "inline": True})
+
+    # Up to 4 real content images (og:image + article images) → a gallery.
+    images = []
+    if link and (source.get("resolve_content") or source.get("fetch_body")
+                 or source.get("og_image")):
+        images = fetch_article(link)[1]
+    if not images:
+        single = item.get("image") or source.get("default_image")
+        images = [single] if single else []
+    images = images[:4] or ([source["default_image"]] if source.get("default_image") else [])
+
+    # Full English article, category badge on top, split into embeds that respect
+    # Discord's per-description cap (badge rides on the first chunk).
+    badge = f"{cat_emoji} `{cat_label}`"
+    body_chunks = _chunk_text(desc, EMBED_DESC_MAX - len(badge) - 4) if desc else []
+    if body_chunks:
+        en_chunks = [f"{badge}\n\n{body_chunks[0]}"] + body_chunks[1:]
+    else:
+        en_chunks = [badge]
+    embed["description"] = en_chunks[0]
     embed["fields"] = fields
-
-    # A real, full-width image for the article (og:image / wide banner / source).
-    image = resolved_image
-    if not image and source.get("og_image") and item.get("link"):
-        image = fetch_og_image(item["link"])
-    image = image or item.get("image") or source.get("default_image")
-    if image:
-        embed["image"] = {"url": image}
-
     embeds = [embed]
+    for ch in en_chunks[1:]:               # continuation embeds (no url → no merge)
+        embeds.append({"color": color, "description": ch})
 
-    # A SECOND embed holds the FULL Vietnamese translation behind a spoiler:
-    # English stays primary, the whole thing is one tap away, and the two embeds
-    # together stay under Discord's 6000-char per-message budget.
+    # Image(s): a gallery only works when English is a single embed (Discord
+    # merges same-url embeds), otherwise attach one lead image.
+    if images:
+        embed["image"] = {"url": images[0]}
+        if len(en_chunks) == 1 and link:
+            embed["url"] = link
+            for img in images[1:4]:
+                embeds.append({"url": link, "image": {"url": img}})
+
+    # The FULL Vietnamese translation, hidden behind spoilers, split as needed.
     if source.get("translate", True):
-        vi_title = translate_vi(en_title)
-        vi_body = translate_vi(desc) if desc else None
-        vi_full = "\n\n".join(x for x in (vi_title, vi_body) if x)
-        if vi_full:
-            used = (len(embed.get("description", "")) + len(en_title) + 40
-                    + sum(len(f["name"]) + len(f["value"]) for f in fields))
-            label = "🇻🇳 **Tiếng Việt** — bấm để xem:\n"
-            room = EMBED_TOTAL_MAX - used - len(label) - 8
-            if room > 150:
-                if len(vi_full) > room:
-                    vi_full = vi_full[:room].rsplit(" ", 1)[0].rstrip(" ,;:.") + " …"
-                embeds.append({"color": int(source.get("color", 0x5865F2)),
-                               "description": label + _spoiler(vi_full)})
+        vi_full = "\n\n".join(x for x in (translate_vi(en_title),
+                                          translate_vi(desc) if desc else None) if x)
+        for j, ch in enumerate(_chunk_text(vi_full, EMBED_DESC_MAX - 60)):
+            label = "🇻🇳 **Tiếng Việt** — bấm để xem:\n" if j == 0 else ""
+            embeds.append({"color": color, "description": label + _spoiler(ch)})
 
-    payload = {"embeds": embeds}
-    if ping:
-        payload["content"] = ping
-        payload["allowed_mentions"] = mentions
-    _send(payload)
+    _send_messages(embeds, ping, mentions)
+
+
+def _embed_len(e):
+    n = len(e.get("title", "")) + len(e.get("description", ""))
+    n += len(e.get("author", {}).get("name", ""))
+    n += len(e.get("footer", {}).get("text", ""))
+    for f in e.get("fields", []):
+        n += len(f.get("name", "")) + len(f.get("value", ""))
+    return n
+
+
+def _send_messages(embeds, ping=None, mentions=None):
+    """Send the embeds, packing them into as few messages as possible while
+    respecting Discord's limits (≤10 embeds and ≤6000 chars per message). The
+    @-ping rides only on the first message."""
+    groups, cur, cur_len = [], [], 0
+    for e in embeds:
+        el = _embed_len(e)
+        if cur and (cur_len + el > EMBED_TOTAL_MAX or len(cur) >= 10):
+            groups.append(cur)
+            cur, cur_len = [], 0
+        cur.append(e)
+        cur_len += el
+    if cur:
+        groups.append(cur)
+    for i, group in enumerate(groups):
+        payload = {"embeds": group}
+        if i == 0 and ping:
+            payload["content"] = ping
+            payload["allowed_mentions"] = mentions
+        _send(payload)
+        if i < len(groups) - 1:
+            time.sleep(0.7)
 
 
 # ── active-codes tracker (a single, self-updating "live codes" message) ───────
@@ -1156,9 +1295,10 @@ def main():
                 if src.get("resolve_content") and "news.google.com" in (it.get("link") or ""):
                     real = resolve_google_news(it["link"])
                     if real and "news.google.com" not in real:
-                        og_desc, _ = fetch_og(real)
+                        og_desc, imgs = fetch_article(real)
                         log(f"       🔗 {real[:80]}")
                         log(f"       📄 {(clean_summary(og_desc or '') or '(no body)')[:120]}")
+                        log(f"       🖼️ {len(imgs)} image(s)")
                     else:
                         log("       🔗 (decode failed → falls back to title + banner)")
             continue
