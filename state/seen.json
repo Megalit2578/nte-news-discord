@@ -1,8 +1,4 @@
 {
-  "Steam — NTE": [
-    "1836506165556394",
-    "1833334318573778"
-  ],
   "Leaks — r/NTELeaks": [
     "t3_1um8xbq",
     "t3_1ukcor5",
@@ -28,6 +24,10 @@
     "yt:video:7zomVkm5DQo",
     "yt:video:MAJqNaZ1umc"
   ],
+  "Steam — NTE": [
+    "1836506165556394",
+    "1833334318573778"
+  ],
   "Google News — NTE": [
     "CBMigAFBVV95cUxQeGtTNU83eHhBMmExVjBWUUVwUjVLcWtheVdUejczaVcwbk9XdDVWZndsR194VzhkS1AyR3ZzZUNCTF9jR0RkN29pVENiUnNmSFRxTy1uM0ktZS1FdUtWU0dpX3ZOTmNkMXhtNGpQSGwyTl9zanh0QndvQmx2c3RvdA",
     "CBMi1AFBVV95cUxNVnhhVGFHdk5Hd1gza3AxTDNkNXBiY05GRjEyOHVSVjhVQjJQUDJDWDByUG03eWh4RVllSk9ob1ozZzI0SnlkNWVEUUttQkFSTm56MVpiNjlLWUFDUVdQUHV5ZS1KLU1YTUk2Y25hWEpOZEhqbHo4Ql9Gd0NJcFk1RFBrQWQyRFd0VVkwdGRIN2hkWF95dkcwZmptdV9rMTVDVkxNNGprR0xMcHF0WVp1NldQM3pqY0cyeHE5a3RrUXh1MWd5YW9wdTNMM0U3X0h3b2N0LQ",
@@ -39,11 +39,12 @@
     "CBMiggFBVV95cUxNc3hXNWtHT3RjSFZKbUZMekw1X2YyeVRXbUliUlNOSDJoc090UVZRVXpXX29fc2xlTDF2M2IyRlNDNWJTTUk5WmZOOUhwU095UGh2dUlBUlpYT0N5WVVQbk9Qcm0zdXdWbklUZWM2ZVBKRGw2N1pkXy1TbFVBTnVRNDB3",
     "CBMizwFBVV95cUxQRDQ4WHVQSFVkckVHZFFBaDkxdWRQVnA4Rm5aQkNFbDRjb2JXSms1SXJTU05pUlpvbUJtckNPQWdkdTYxd0RNRDFuOU43cy1oUE1OUTBtelFJU2Y4NVpRbVhSZnZLZ1U1V0Z3WjNEcmZrc05wMzd0NmpxUkR4a2NQbDVod2FldnJTUXlkdmhNaFR1MFlvM19ZS2VXbUp4cDNnaldXMXdxc05kOGV6QVVfY2psRkRNMXZZUFZlV0xRVzhsdzduZWI4ZDlxZVA2Vkk",
     "CBMirwFBVV95cUxPOHZrUDhDaGxNZ0YxX2RyV0loSjc4bXJVMTRHRzZSbHE0emt3UVRfZFNxSGdMZzZ1OWRhdFhzQVhTZEFZdmtlVFplRmZBdElZc2hEOFFCUm9oRUhmZUp5R3BjOEowRzljaTFLU3Y1MTZ0WHZ5bGZlTXNxbkEyYkhhQ0ZpaWRtM1lpeG9wRG5wMU1kZHNMRGQwbkZlZWFMbWIzdnAyTjBZV3ZuTGJibVFv",
+    "CBMilAFBVV95cUxNOVphX1JhbmtqS2R3dVE4dHYtZk5Fa0d2MUxuY1pwcjdaY1BFYzB2Ry04b01jOVZXOHNGMGRVZzh5UVdFTDBaeXpXUnAyMEk1NVdYUktuMkJVNFp6YlVkaUZSY1lpS3FwTGtZVjI2UHJjaVNFYWRxVm90SGpSLUY2SGlBZjUtT0tKVmFERFFFV3RFU1pq",
     "CBMimAFBVV95cUxQTDNfQXJMQ1QyZXJPNGpmQmxXWGRiN2xQd1BIMnM5cm5HWTFhaWpLX1lRaEJfUThoLVpLMzZmSWxlQUc5UmVZNEdtOWRIaUZIQUJnY1RhWFRkMy1oU0FuOE1EUWp6THhaTy1vZ3FGd2VrYzI2ODAybUFpUmFoXzRVcmEwRU5melZldWZLRkZ4RF9ZWEdOVlp0dg",
     "CBMiaEFVX3lxTFBEWDVJUEVNUV9IN1pDbnhvek1wd0NSalZIaUpsa05rcGZYendsRFJ1dEhJQndhXzJTTFJvQzIzVF84QXQtRllPb0IyeWVZZllDQS05cjZ2N053NDl3OWtHS0dTWnlvbXh2",
     "CBMigwFBVV95cUxOb1p3VjJPNVdqRTctVTZkVGRVNFNILUFYWHd4cUVWZGtiOEhtbHBkemwxOUt6Tk1jOUNlRFVkYlBzWmFuOFdhdUl2VFpqNTVlUlNIYUdfbF8za1E0T3daaHl6SkV4eXFVUzFHWHZTM2ZwaDBiQ3p1LXdkVWh2cktxcG44VQ",
-    "CBMiqwFBVV95cUxOUF9GVks5dGtkdWVwV05uMHZaWElOQzVrZXFGVnRzNGZlRzJuUEM3N0xGUEpWVUozZVJxVksycE9kTGVwemY1TkxoeWdObkVqLTc4eDdkMndleU85cHhKQm1hWnVvMlpFUFR3ZkczZ1NfUURzX09qT3Y0LWF6by1CSmRXcGRzbkRYRHAtVmIxWUp5X3NqMTVoaWEwTVU2a2lmbm85aG1rT3pTMmM",
     "CBMidEFVX3lxTE41VEFmQ0psRTVDMXpGRVJlWkRoYUV0ekRrbDk3SVY2X01rV0ZEQ1JNSkVOZDhtWjEwUURzSlBkek84NzFwSWxVcUpsRkdlVjlIUEJsVjh5dWptbVJSU29UdjNPWGZHaFo2ZlZCblVBV3UxUUtK",
+    "CBMiqwFBVV95cUxOUF9GVks5dGtkdWVwV05uMHZaWElOQzVrZXFGVnRzNGZlRzJuUEM3N0xGUEpWVUozZVJxVksycE9kTGVwemY1TkxoeWdObkVqLTc4eDdkMndleU85cHhKQm1hWnVvMlpFUFR3ZkczZ1NfUURzX09qT3Y0LWF6by1CSmRXcGRzbkRYRHAtVmIxWUp5X3NqMTVoaWEwTVU2a2lmbm85aG1rT3pTMmM",
     "CBMisgFBVV95cUxPUXBTeE9HVGRkVDVwV05CR3ZmemRZLU40TTlkVXloZ2UwT0ZSa21BMXFuZ1pXVDBCV0VWTnFqVTZ6WFgyM1BlRmVnajdDY2xMOE43UkRic1ZTZEhMNm1lMFNWY21mQzgzcVpRc1dGOG0ydThBcmhGYUZMcC1waC1KUFJ2M0J4SXJMZ2U1dm1ERWxWaC1BQ0ZWR1hPcXBkUDVtaW9CaUhiNmNwZEN2ZDlBbmln0gG3AUFVX3lxTE5YRkRLQ1V0Nkx2SXlBa05WT1Y2eEZEdkxNNHQ0MnNfMDlLS0hCN0pMZ29uREEyX3NJcE9ZanhhRGZ1eF8zVTNJbktXcG9NclQ2NUpGYVlKNUJPd3VrXy0wVjkzMTE2QVF5V2dUUFNYcVNxcGNpTTZRbEw4cUZKVjBCa2lMTnJsUHlmcVZYZ2VKWVdPclhKV2ZxZ3M5WjI1VzlfLXBZUmdkTDlaT3NadU10aDVjM3haOA",
     "CBMibEFVX3lxTE1zbS1fTTdLTDN6UmZLa2tFdXFWaWxST3RSdHpEQl9JRml0V0JxcG5McjlNYWdST20wQ1AySGZuTWQ4bFNsRDF0c25XNGItOExCOWlfVjZzdU5ESU9vUmstWExIMHd4dkY4ZmtYSQ",
     "CBMickFVX3lxTE1ISGVhV0JJbU9oUnlla1BhMHlzcF9Kc1lKdk40dDJTVEpxSTZUUW1lbXJaQ3V6MHhnZEk5RWpsZUhoa2tGY19KUTBrUV9WMEhsdmJIdlI3dFZHcS00NTBFRHQtaHF4UWJnWllTckYzTVF1UQ",
@@ -146,23 +147,6 @@
     "CBMifkFVX3lxTE8tR3JPN2dCVWZQZTFWVHNmaTJVN3hYOTdWSVo2T1pHMWZfYUoxanM1V2pBZEZjYzh6UnRKb0hXYmw2UGgxa0p2WWdqUnBTa0huTVhhVVFsNW82VVZwdnRBOXhocUR5N3RUb1JJM0NvaGJfVXhyWGVUVnRCMG5Jdw",
     "CBMiS0FVX3lxTE1FLWxrN2I2aXZ2N3NwT0RsYjBSeWkyUWRhV1lwQU54ZjVwRW1BbzR1bHl5WC1fRXN5WW1nQTNLaU9aalNicG9jTkpVd9IBUEFVX3lxTE03NTdQc2x2UnBRcGVZa3BEdWNHbUVMUUMyRk04Z0NUbVFqOUNqdGFQM2lxNGNKRWJzTHhwcHJXQTl4U3Y1S21sdlV2TTh0VV9V"
   ],
-  "Community — neverness.gg": [
-    "https://neverness.gg/?p=806",
-    "https://neverness.gg/?p=311",
-    "https://neverness.gg/?p=1854",
-    "https://neverness.gg/?p=1850",
-    "https://neverness.gg/?p=1826",
-    "https://neverness.gg/?p=1764",
-    "https://neverness.gg/?p=1759",
-    "https://neverness.gg/?p=1751",
-    "https://neverness.gg/?p=420",
-    "https://neverness.gg/?p=1659"
-  ],
-  "Official — Perfect World": [
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260629/262911.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260623/262810.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260622/262793.html"
-  ],
   "Reddit — r/NevernessToEverness": [
     "t3_1umzowe",
     "t3_1umgcev",
@@ -193,6 +177,23 @@
     "t3_1ul7151",
     "t3_1ulxd5b"
   ],
+  "Official — Perfect World": [
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260629/262911.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260623/262810.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260622/262793.html"
+  ],
+  "Community — neverness.gg": [
+    "https://neverness.gg/?p=806",
+    "https://neverness.gg/?p=311",
+    "https://neverness.gg/?p=1854",
+    "https://neverness.gg/?p=1850",
+    "https://neverness.gg/?p=1826",
+    "https://neverness.gg/?p=1764",
+    "https://neverness.gg/?p=1759",
+    "https://neverness.gg/?p=1751",
+    "https://neverness.gg/?p=420",
+    "https://neverness.gg/?p=1659"
+  ],
   "__dedup__": [
     "u:steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1836506165556394",
     "t:nte is coming to steam on july 8",
@@ -219,7 +220,8 @@
     "u:reddit.com/r/NevernessToEverness/comments/1umzowe/latest_uddate_buff_on_shinku_is_it_enough",
     "t:latest uddate buff on shinku is it enough",
     "t:how to unlock every playable character in nte",
-    "t:secret tales of the golden tree solution in nte buried sword strange tales"
+    "t:secret tales of the golden tree solution in nte buried sword strange tales",
+    "t:nte launch guide release times free pulls codes and more"
   ],
   "__digest_log__": [
     {
@@ -339,6 +341,13 @@
       "u": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBVWHNuV1hCRmx0c0N5Ukx4TXZrRDd2Zk9WWHN1RWMycXFvY0I1YUVmSjZydzlKaXZucmVJOEhqZjhEdDgzMjdpSUNHMmZzRHRHeGc?oc=5",
       "s": "NTE",
       "e": "📰",
+      "d": "2026-07-04"
+    },
+    {
+      "t": "NTE Launch Guide: Release Times, Free Pulls, Codes, and More - Push Square",
+      "u": "https://news.google.com/rss/articles/CBMilAFBVV95cUxNOVphX1JhbmtqS2R3dVE4dHYtZk5Fa0d2MUxuY1pwcjdaY1BFYzB2Ry04b01jOVZXOHNGMGRVZzh5UVdFTDBaeXpXUnAyMEk1NVdYUktuMkJVNFp6YlVkaUZSY1lpS3FwTGtZVjI2UHJjaVNFYWRxVm90SGpSLUY2SGlBZjUtT0tKVmFERFFFV3RFU1pq?oc=5",
+      "s": "NTE",
+      "e": "🎁",
       "d": "2026-07-04"
     }
   ],
