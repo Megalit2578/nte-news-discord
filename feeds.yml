@@ -34,6 +34,8 @@
   # PW notices carry no image → fall back to the official NTE key-art banner
   # so the post isn't a bare block of text.
   default_image: &nte_banner "https://nte.perfectworld.com/public/images/share_en.jpg"
+  # PW's RSS has no summary → scrape the notice's real body text off the page.
+  fetch_body: true
 
 # Official Steam "Community Announcements" (patch notes, events, maintenance).
 # Uses the ISteamNews API because the store RSS 404s until launch (8 Jul 2026).
