@@ -309,6 +309,81 @@ def fetch_og_image(url):
         return None
 
 
+_og_cache = {}
+
+
+def fetch_og(url):
+    """Return (description, image_url) from a page's OpenGraph/meta tags in ONE
+    request (cached). Quote delimiters are captured with a back-reference so an
+    apostrophe inside the text (e.g. "Don't") doesn't cut it short. Either value
+    may be None; on any failure both are None."""
+    if url in _og_cache:
+        return _og_cache[url]
+    result = (None, None)
+    try:
+        text = requests.get(url, headers=HEADERS, timeout=20, allow_redirects=True).text
+
+        def meta(*pats):
+            for p in pats:
+                m = re.search(p, text, re.I | re.S)
+                if m and m.group(m.lastindex).strip():
+                    return html.unescape(m.group(m.lastindex).strip())
+            return None
+
+        desc = meta(r'<meta[^>]+property=["\']og:description["\'][^>]+content=(["\'])(.*?)\1',
+                    r'<meta[^>]+name=["\']description["\'][^>]+content=(["\'])(.*?)\1',
+                    r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:description["\']')
+        image = meta(r'<meta[^>]+property=["\']og:image["\'][^>]+content=(["\'])(.*?)\1',
+                     r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:image["\']')
+        result = (desc, image)
+    except Exception:
+        result = (None, None)
+    _og_cache[url] = result
+    return result
+
+
+_gn_cache = {}
+
+
+def resolve_google_news(url):
+    """Google News RSS links are opaque redirects (news.google.com/rss/articles/
+    CBMi…) that don't resolve over plain HTTP. Decode them to the REAL publisher
+    URL via Google's batchexecute endpoint so we can link to — and pull real body
+    text from — the actual article. Returns the resolved URL, the original url if
+    it isn't a Google-News link, or None on failure (caller falls back)."""
+    if not url or "news.google.com" not in url:
+        return url
+    if url in _gn_cache:
+        return _gn_cache[url]
+    real = None
+    try:
+        tok = re.search(r"/(?:articles|read)/([A-Za-z0-9_\-]+)", url).group(1)
+        r = requests.get(f"https://news.google.com/rss/articles/{tok}",
+                         headers=HEADERS, timeout=20)
+        sg = re.search(r'data-n-a-sg="([^"]+)"', r.text)
+        ts = re.search(r'data-n-a-ts="([^"]+)"', r.text)
+        if sg and ts:
+            req = ["garturlreq",
+                   [["X", "X", ["X", "X"], None, None, 1, 1, "US:en", None, 1,
+                     None, None, None, None, None, 0, 1],
+                    "X", "X", 1, [1, 1, 1], 1, 1, None, 0, 0, None, 0],
+                   tok, int(ts.group(1)), sg.group(1)]
+            payload = [[["Fbv4je", json.dumps(req)]]]
+            r2 = requests.post(
+                "https://news.google.com/_/DotsSplashUi/data/batchexecute",
+                headers={**HEADERS,
+                         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+                data={"f.req": json.dumps(payload)}, timeout=20)
+            for u in re.findall(r'https?://[^\\"\s]+', r2.text):
+                if "google.com" not in u and "gstatic" not in u:
+                    real = u
+                    break
+    except Exception:
+        real = None
+    _gn_cache[url] = real
+    return real
+
+
 def load_state():
     try:
         return json.loads(STATE_PATH.read_text("utf-8"))
@@ -325,10 +400,11 @@ def save_state(state):
 def fetch_rss(url):
     """Return newest-first list of dict(id,title,link,summary,thumb,ts)."""
     resp = requests.get(url, headers=HEADERS, timeout=30)
-    # Reddit throttles shared cloud IPs (429). A couple of short retries help it
-    # squeeze through on some runs; if it still fails the source is optional.
-    for _ in range(2):
-        if resp.status_code != 429:
+    # Shared cloud IPs get throttled: Reddit → 429, Google News → occasional
+    # 503. A few short retries usually squeeze through; if not, the source is
+    # optional or just skipped for this run.
+    for _ in range(3):
+        if resp.status_code not in (429, 500, 502, 503, 504):
             break
         time.sleep(4)
         resp = requests.get(url, headers=HEADERS, timeout=30)
@@ -590,10 +666,20 @@ def post_discord(item, source):
     # English by default; the Vietnamese translation is offered on demand as a
     # tap-to-reveal spoiler below (see vi_reveal).
     en_title = item["title"]
+
+    # For aggregators (Google News) decode the opaque redirect to the REAL
+    # article URL, so the card links to the actual article AND we can fetch its
+    # body text below. Falls back to the original link if decoding fails.
+    link = item.get("link") or ""
+    if source.get("resolve_content") and "news.google.com" in link:
+        real = resolve_google_news(link)
+        if real and "news.google.com" not in real:
+            link = real
+
     now_vn = dt.datetime.now(VN_TZ).strftime("%H:%M")
     embed = {
         "title": f'{topic_emoji(en_title)} {en_title}'[:256],
-        "url": item["link"] or None,
+        "url": link or None,
         "color": int(source.get("color", 0x5865F2)),
         "author": {"name": author_name[:256]},
         "footer": {"text": f"Neverness to Everness • auto-news • {now_vn}"},
@@ -602,11 +688,20 @@ def post_discord(item, source):
         embed["author"]["icon_url"] = source["icon"]
 
     # REAL body only: a feed summary that just echoes the headline (Google News
-    # and other aggregators do this) adds nothing, so we drop it instead of
-    # repeating the title. neverness.gg / Steam carry genuine excerpts and pass.
+    # and other aggregators do this) adds nothing, so we drop it. neverness.gg /
+    # Steam carry genuine excerpts and pass. For `resolve_content` sources with
+    # no real excerpt, pull the article's og:description so the post has actual
+    # content instead of only a title.
     desc = clean_summary(item.get("summary"))
     if is_title_echo(desc, en_title):
         desc = ""
+    resolved_image = None
+    if source.get("resolve_content") and link and "news.google.com" not in link:
+        og_desc, resolved_image = fetch_og(link)
+        if not desc:
+            og = clean_summary(og_desc or "")
+            if og and not is_title_echo(og, en_title):
+                desc = og
 
     parts = []
     if desc:                           # the real English article excerpt, if any
@@ -630,16 +725,16 @@ def post_discord(item, source):
     if when:
         fields.append({"name": "📅 Đăng lúc", "value": when, "inline": True})
     fields.append({"name": "📡 Nguồn", "value": outlet or short_src, "inline": True})
-    if item.get("link"):
+    if link:
         fields.append({"name": "🔗 Chi tiết",
-                       "value": f"[Mở bài viết ›]({item['link']})", "inline": True})
+                       "value": f"[Mở bài viết ›]({link})", "inline": True})
     embed["fields"] = fields
 
     # Prefer a wide og:image banner over a portrait inline image, then attach
     # it as a big image UNDER the embed (attachments render wider than embed
     # images → the card looks large and fills the max width Discord allows).
-    image = None
-    if source.get("og_image") and item.get("link"):
+    image = resolved_image
+    if not image and source.get("og_image") and item.get("link"):
         image = fetch_og_image(item["link"])
     image = image or item.get("image") or source.get("default_image")
 
@@ -904,6 +999,15 @@ def main():
                     vi = translate_vi(it["title"])
                     if vi:
                         log(f"       🇻🇳 {vi}")
+                # verify the Google-News decode + real-content fetch on the runner
+                if src.get("resolve_content") and "news.google.com" in (it.get("link") or ""):
+                    real = resolve_google_news(it["link"])
+                    if real and "news.google.com" not in real:
+                        og_desc, _ = fetch_og(real)
+                        log(f"       🔗 {real[:80]}")
+                        log(f"       📄 {(clean_summary(og_desc or '') or '(no body)')[:120]}")
+                    else:
+                        log("       🔗 (decode failed → falls back to title + banner)")
             continue
 
         ids_now = [it["id"] for it in items]
