@@ -313,19 +313,49 @@ _CONTENT_CLASSES = ("articleContent", "article-content", "entry-content",
                     "post-content", "richtext")
 
 
-def _extract_body(text, limit=700):
-    """Pull the main article text out of page HTML by finding a known content
-    container. Returns cleaned text or None."""
+_BOILER_RE = re.compile(
+    r"(?i)subscribe|newsletter|sign ?up|cookie|advertis|follow us|read more|"
+    r"related:|share this|all rights reserved|©|table of contents")
+
+
+def _extract_body(text, limit=600):
+    """Pull the MAIN article prose out of page HTML: locate a known content
+    container, then join its first real <p> paragraphs (skipping short/boilerplate
+    lines) so we get the actual point of the article, not nav/captions/promos.
+    Falls back to a plain tag-strip. Returns cleaned text or None."""
+    region = text
     for cls in _CONTENT_CLASSES:
         m = re.search(rf'(?is)class="[^"]*{cls}[^"]*"[^>]*>(.*)', text)
-        if not m:
+        if m:
+            region = m.group(1)
+            break
+
+    paras = []
+    for pm in re.finditer(r"(?is)<p[^>]*>(.*?)</p>", region):
+        p = re.sub(r"<[^>]+>", " ", pm.group(1))
+        p = re.sub(r"\s+", " ", html.unescape(p)).strip()
+        if len(p) < 40 or _BOILER_RE.search(p):
             continue
-        chunk = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", m.group(1))
-        chunk = re.sub(r"<[^>]+>", " ", chunk)
-        chunk = re.sub(r"\s+", " ", html.unescape(chunk)).strip()
-        if len(chunk) > 40:
-            return chunk[:limit]
-    return None
+        paras.append(p)
+        if sum(len(x) for x in paras) >= limit:
+            break
+    if paras:
+        return " ".join(paras)[:limit]
+
+    chunk = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", region)
+    chunk = re.sub(r"<[^>]+>", " ", chunk)
+    chunk = re.sub(r"\s+", " ", html.unescape(chunk)).strip()
+    return chunk[:limit] if len(chunk) > 40 else None
+
+
+# og:descriptions that are a site-wide tagline, not about the specific article
+# (Perfect World reuses one blurb on every page) → treat as "no real summary".
+_GENERIC_DESC_RE = re.compile(
+    r"(?i)developed by Hotta Studio|supernatural urban open-world")
+
+
+def _looks_generic(desc):
+    return not desc or bool(_GENERIC_DESC_RE.search(desc))
 
 
 _og_cache = {}
@@ -333,11 +363,11 @@ _og_cache = {}
 
 def fetch_og(url):
     """Return (description, image_url) from a page in ONE request (cached).
-    Prefers the REAL article body over og:description — some sites (Perfect
-    World) use one generic site-wide og:description on every page, so the actual
-    article text is the only concrete content. Quote delimiters use a
-    back-reference so an apostrophe ("Don't") doesn't truncate. Either value may
-    be None; on failure both are None."""
+    og:description is the article's own SEO summary — usually the crisp main
+    point — so we prefer it. Only when it's missing or a generic site-wide blurb
+    (Perfect World reuses one tagline everywhere) do we fall back to the real
+    article body. Quote delimiters use a back-reference so an apostrophe
+    ("Don't") doesn't truncate. Either value may be None; on failure both are."""
     if url in _og_cache:
         return _og_cache[url]
     result = (None, None)
@@ -357,9 +387,9 @@ def fetch_og(url):
                        r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:description["\']')
         image = meta(r'<meta[^>]+property=["\']og:image["\'][^>]+content=(["\'])(.*?)\1',
                      r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:image["\']')
-        body = _extract_body(text)
-        # a substantial article body beats a short/generic og:description
-        desc = body if (body and len(body) >= 120) else og_desc
+        desc = og_desc
+        if _looks_generic(og_desc):     # no real per-article summary → use body
+            desc = _extract_body(text) or og_desc
         result = (desc, image)
     except Exception:
         result = (None, None)
@@ -744,7 +774,7 @@ def post_discord(item, source):
         og_desc, resolved_image = fetch_og(link)
         if not desc:
             og = clean_summary(og_desc or "")
-            if og and not is_title_echo(og, en_title):
+            if og and not is_title_echo(og, en_title) and not _looks_generic(og):
                 desc = og
     # Sources whose feed has no real summary (Perfect World notices) → pull the
     # actual article text off the page so the post has concrete content.
