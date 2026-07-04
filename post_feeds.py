@@ -58,6 +58,7 @@ TRANSLATE = os.environ.get("TRANSLATE", "1").strip() not in ("0", "false", "Fals
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "").strip()
 MAX_PER_RUN = int(os.environ.get("MAX_PER_RUN", "8"))
 PING_ROLE_ID = os.environ.get("PING_ROLE_ID", "").strip()
+TEST_URL = os.environ.get("TEST_URL", "").strip()  # post ONE article as a live test
 KEEP_IDS = 300     # how many recent item-ids to remember per source
 KEEP_DEDUP = 500   # how many recent content-keys to remember globally
 KEEP_DIGEST = 120  # how many recent posts to keep for the daily digest
@@ -1215,6 +1216,28 @@ def main():
     state = load_state()
     posted_total = 0
     changed = False
+
+    # Test mode: build ONE post from a given article URL and send it, bypassing
+    # the dedup/seen state — a way to verify the live format on demand.
+    if TEST_URL:
+        is_google = "news.google.com" in TEST_URL
+        page_url = (resolve_google_news(TEST_URL) or TEST_URL) if is_google else TEST_URL
+        title = None
+        raw = _get_page(page_url)
+        if raw:
+            t = raw.decode("utf-8", "replace")
+            title = _meta(t, r'<meta[^>]+property=["\']og:title["\'][^>]+content=(["\'])(.*?)\1',
+                          r"<title[^>]*>(.*?)</title>")
+        item = {"title": (title or "NTE test article").strip()[:250], "link": TEST_URL,
+                "summary": "", "ts": dt.datetime.now(dt.timezone.utc),
+                "publisher": urlsplit(page_url).netloc.replace("www.", "")}
+        src = {"name": "🧪 Test — NTE", "emoji": "🧪", "color": 0x5865F2, "translate": True,
+               "resolve_content": is_google, "fetch_body": not is_google,
+               "default_image": "https://nte.perfectworld.com/public/images/share_en.jpg"}
+        log(f"[TEST] posting: {item['title']}")
+        post_discord(item, src)
+        log("✓ TEST post sent to Discord")
+        return
 
     # Daily-digest mode (its own scheduled run): summarise today's posts and stop.
     if DIGEST:

@@ -18,6 +18,10 @@ on:
         description: "Post the daily digest now (summary of today's news)"
         type: boolean
         default: false
+      test_url:
+        description: "Live test: post ONE article from this URL (bypasses dedup)"
+        type: string
+        default: ""
 
 concurrency:
   group: nte-news
@@ -54,6 +58,7 @@ jobs:
           SEED_POST: ${{ inputs.seed_post || '0' }}
           # Daily-digest mode: on the 13:00-UTC cron, or when run by hand with digest=true.
           DIGEST: ${{ (github.event.schedule == '0 13 * * *' || inputs.digest) && '1' || '' }}
+          TEST_URL: ${{ inputs.test_url }}
         run: python post_feeds.py
 
       - name: Persist seen-state
