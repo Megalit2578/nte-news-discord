@@ -276,6 +276,27 @@ def translate_vi(text):
     return result
 
 
+def _spoiler(text):
+    """Wrap text as a click-to-reveal Discord spoiler (escape stray pipes so
+    they don't break the ||…|| markup). Empty string if there's nothing."""
+    text = (text or "").replace("|", "∣").strip()
+    return f"||{text}||" if text else ""
+
+
+def vi_reveal(title, desc, source):
+    """The on-demand '🇻🇳 Tiếng Việt (bấm để xem)' line: the Vietnamese
+    translation hidden behind a spoiler so English stays the default and readers
+    tap to reveal it. '' when translation is off or unavailable. (A real Discord
+    button needs an application-owned webhook — a plain channel webhook can't
+    send message components — so a spoiler is the reliable in-message toggle.)"""
+    if not source.get("translate", True):
+        return ""
+    vi_t = translate_vi(title)
+    vi_d = translate_vi(desc) if desc else None
+    body = " — ".join(x for x in (vi_t, vi_d) if x).strip()
+    return f"🇻🇳 *Tiếng Việt (bấm để xem):* {_spoiler(body)}" if body else ""
+
+
 def fetch_og_image(url):
     """The article's og:image — usually a WIDE banner, so the embed renders
     at full width instead of tall-and-thin. Returns None on any failure."""
@@ -548,9 +569,9 @@ def post_discord(item, source):
     # PLAYABLE inline player (rich embeds never play video). Shorts → watch.
     if source.get("video"):
         link = normalize_youtube(item["link"])
-        header = f"{emoji} **{item['title']}**".strip()
-        vi = translate_vi(item["title"]) if source.get("translate", True) else None
-        vi_line = f"\n🇻🇳 {vi}" if vi else ""
+        header = f"{emoji} **{item['title']}**".strip()   # English by default
+        rv = vi_reveal(item["title"], "", source)          # tap-to-reveal VN
+        vi_line = f"\n{rv}" if rv else ""
         lead = f"{ping}\n" if ping else ""
         # link stays on its own last line so Discord renders the player
         payload = {"content": f"{lead}{header}{vi_line}\n{link}"[:2000]}
@@ -566,14 +587,12 @@ def post_discord(item, source):
     if outlet and outlet.lower() not in author_name.lower():
         author_name = f"{author_name} · {outlet}"
 
-    # Vietnamese-first: translate the headline (and summary) for VN readers,
-    # keeping the English original underneath. Falls back cleanly on failure.
+    # English by default; the Vietnamese translation is offered on demand as a
+    # tap-to-reveal spoiler below (see vi_reveal).
     en_title = item["title"]
-    vi_title = translate_vi(en_title) if source.get("translate", True) else None
-
     now_vn = dt.datetime.now(VN_TZ).strftime("%H:%M")
     embed = {
-        "title": f'{topic_emoji(en_title)} {vi_title or en_title}'[:256],
+        "title": f'{topic_emoji(en_title)} {en_title}'[:256],
         "url": item["link"] or None,
         "color": int(source.get("color", 0x5865F2)),
         "author": {"name": author_name[:256]},
@@ -589,12 +608,12 @@ def post_discord(item, source):
     if is_title_echo(desc, en_title):
         desc = ""
 
-    vi_desc = translate_vi(desc) if (desc and source.get("translate", True)) else None
     parts = []
-    if vi_title:                       # show the original English headline for reference
-        parts.append(f"*{en_title}*")
-    if vi_desc or desc:                # the real article excerpt, if any
-        parts.append(vi_desc or desc)
+    if desc:                           # the real English article excerpt, if any
+        parts.append(desc)
+    rv = vi_reveal(en_title, desc, source)   # 🇻🇳 spoiler — tap to translate
+    if rv:
+        parts.append(rv)
     if parts:
         embed["description"] = "\n\n".join(parts)[:4096]
 
@@ -776,12 +795,10 @@ def run_digest(state):
     for name, entries in groups.items():
         lines.append(f"\n**{name}**")
         for e in entries[:12]:
-            title = (e.get("t") or "").strip()
-            vi = translate_vi(title)           # Vietnamese-first headlines
+            title = (e.get("t") or "").strip()   # English by default
             url = e.get("u")
-            label = vi or title
-            lines.append(f"{e.get('e', '•')} [{label}]({url})" if url
-                         else f"{e.get('e', '•')} {label}")
+            lines.append(f"{e.get('e', '•')} [{title}]({url})" if url
+                         else f"{e.get('e', '•')} {title}")
 
     # One-stop: remind readers of the codes that are live right now.
     codes = state.get(CODES_LIST_KEY, [])
