@@ -32,6 +32,11 @@ import requests
 import feedparser
 import yaml
 
+try:
+    import trafilatura   # best-in-class main-article text extraction
+except Exception:
+    trafilatura = None
+
 # Titles contain CJK / emoji; make console output UTF-8 safe on every OS.
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -313,6 +318,48 @@ _CONTENT_CLASSES = ("articleContent", "article-content", "entry-content",
                     "post-content", "richtext")
 
 
+BODY_LIMIT = 1300   # how many chars of article text to show (a full summary)
+
+
+def _trafilatura_extract(raw, limit=BODY_LIMIT):
+    """Clean MAIN article text via trafilatura (handles arbitrary news sites far
+    better than regex). `raw` is the page bytes (so encoding is auto-detected).
+    Strips breadcrumb/date lines, keeps paragraph breaks, trims to `limit` on a
+    word boundary. Returns None if unavailable, empty, or clearly junk (paywall
+    stubs are short)."""
+    if not trafilatura:
+        return None
+    try:
+        txt = trafilatura.extract(raw, include_comments=False,
+                                  include_tables=False, favor_precision=True)
+    except Exception:
+        txt = None
+    if not txt:
+        return None
+    lines, started = [], False
+    for ln in txt.split("\n"):
+        ln = ln.strip()
+        if not ln:
+            continue
+        if ">" in ln and len(ln) < 70:               # breadcrumb "A>B>News"
+            continue
+        if re.fullmatch(r"\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2}", ln):  # bare date
+            continue
+        if not started:
+            # skip leading section labels / repeated headline (short lines that
+            # aren't full sentences) until the real prose starts
+            if len(ln) < 80 and not re.search(r'[.!?…]["\')”]?$', ln):
+                continue
+            started = True
+        lines.append(ln)
+    body = "\n\n".join(lines).strip()
+    if len(body) < 120:                              # paywall/login stub → junk
+        return None
+    if len(body) > limit:
+        body = body[:limit].rsplit(" ", 1)[0].rstrip(" ,;:.") + " …"
+    return body
+
+
 _BOILER_RE = re.compile(
     r"(?i)subscribe|newsletter|sign ?up|cookie|advertis|follow us|read more|"
     r"related:|share this|all rights reserved|©|table of contents")
@@ -372,8 +419,9 @@ def fetch_og(url):
         return _og_cache[url]
     result = (None, None)
     try:
-        text = requests.get(url, headers=HEADERS, timeout=20,
-                            allow_redirects=True).content.decode("utf-8", "replace")
+        raw = requests.get(url, headers=HEADERS, timeout=25,
+                           allow_redirects=True).content
+        text = raw.decode("utf-8", "replace")
 
         def meta(*pats):
             for p in pats:
@@ -387,8 +435,15 @@ def fetch_og(url):
                        r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:description["\']')
         image = meta(r'<meta[^>]+property=["\']og:image["\'][^>]+content=(["\'])(.*?)\1',
                      r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:image["\']')
-        desc = og_desc
-        if _looks_generic(og_desc):     # no real per-article summary → use body
+        # Fuller, accurate content: prefer the real extracted article text; fall
+        # back to og:description (some sites paywall/JS-block extraction), and to
+        # the regex body only when og is a generic site-wide blurb.
+        article = _trafilatura_extract(raw)
+        if article:
+            desc = article
+        elif not _looks_generic(og_desc):
+            desc = og_desc
+        else:
             desc = _extract_body(text) or og_desc
         result = (desc, image)
     except Exception:
@@ -442,16 +497,17 @@ def resolve_google_news(url):
 _body_cache = {}
 
 
-def fetch_article_body(url, limit=700):
+def fetch_article_body(url, limit=BODY_LIMIT):
     """The main article text from a news page whose feed carries no real summary
     (e.g. Perfect World official notices — maintenance, account actions, events).
-    Cached; decoded as UTF-8 so dashes/quotes don't mojibake."""
+    Prefers trafilatura, falls back to the regex extractor. Cached; UTF-8 safe."""
     if url in _body_cache:
         return _body_cache[url]
     body = None
     try:
-        text = requests.get(url, headers=HEADERS, timeout=20).content.decode("utf-8", "replace")
-        body = _extract_body(text, limit)
+        raw = requests.get(url, headers=HEADERS, timeout=20).content
+        body = _trafilatura_extract(raw, limit) or _extract_body(
+            raw.decode("utf-8", "replace"), limit)
     except Exception:
         body = None
     _body_cache[url] = body
@@ -766,20 +822,20 @@ def post_discord(item, source):
     # Steam carry genuine excerpts and pass. For `resolve_content` sources with
     # no real excerpt, pull the article's og:description so the post has actual
     # content instead of only a title.
-    desc = clean_summary(item.get("summary"))
+    desc = clean_summary(item.get("summary"), BODY_LIMIT)
     if is_title_echo(desc, en_title):
         desc = ""
     resolved_image = None
     if source.get("resolve_content") and link and "news.google.com" not in link:
         og_desc, resolved_image = fetch_og(link)
         if not desc:
-            og = clean_summary(og_desc or "")
+            og = clean_summary(og_desc or "", BODY_LIMIT)
             if og and not is_title_echo(og, en_title) and not _looks_generic(og):
                 desc = og
     # Sources whose feed has no real summary (Perfect World notices) → pull the
     # actual article text off the page so the post has concrete content.
     if not desc and source.get("fetch_body") and link:
-        body = clean_summary(fetch_article_body(link) or "")
+        body = clean_summary(fetch_article_body(link) or "", BODY_LIMIT)
         if body and not is_title_echo(body, en_title):
             desc = body
 
