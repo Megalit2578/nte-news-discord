@@ -400,10 +400,11 @@ def save_state(state):
 def fetch_rss(url):
     """Return newest-first list of dict(id,title,link,summary,thumb,ts)."""
     resp = requests.get(url, headers=HEADERS, timeout=30)
-    # Reddit throttles shared cloud IPs (429). A couple of short retries help it
-    # squeeze through on some runs; if it still fails the source is optional.
-    for _ in range(2):
-        if resp.status_code != 429:
+    # Shared cloud IPs get throttled: Reddit → 429, Google News → occasional
+    # 503. A few short retries usually squeeze through; if not, the source is
+    # optional or just skipped for this run.
+    for _ in range(3):
+        if resp.status_code not in (429, 500, 502, 503, 504):
             break
         time.sleep(4)
         resp = requests.get(url, headers=HEADERS, timeout=30)
