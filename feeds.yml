@@ -91,7 +91,10 @@
   keep:    '(?i)\b(code|redeem|maintenance|hotfix|patch|update|version|banner|event|launch|release|leak|nerf|buff|compensat|announce|anniversary|collab|revenue|delay|server|down)\b'
   # …but strip the evergreen guide/tier-list/reroll SEO spam that isn't news.
   exclude: '(?i)(tier ?list|reroll|\bbuild\b|best (build|team)|beginner|how to (get|play|beat)|team comp|walkthrough|\bfarm(ing)?\b|\btips\b|wiki|voice actor|fishing|dailies|city tycoon|\bcafe\b|materials|ascension|\bfons\b|reset time|worth (pulling|it)|should (you|i)|\bguide\b)'
-  # Google links are opaque (no fetchable image) → always show the NTE banner.
+  # Decode the opaque Google redirect → real article URL, then pull the article's
+  # og:description (real body text) + og:image so the post has actual content,
+  # not just a headline. Falls back to the NTE banner if decoding fails.
+  resolve_content: true
   default_image: *nte_banner
 
 # Live "Active codes" card: the bot scrapes the current working codes and keeps
