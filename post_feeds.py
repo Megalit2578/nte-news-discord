@@ -384,6 +384,37 @@ def resolve_google_news(url):
     return real
 
 
+_body_cache = {}
+
+
+def fetch_article_body(url, limit=700):
+    """Extract the main article text from a news page whose feed carries no real
+    summary (e.g. Perfect World official notices — maintenance, account actions,
+    events). Tries the common content containers and returns cleaned text, or
+    None. Cached; decoded as UTF-8 so dashes/quotes don't mojibake."""
+    if url in _body_cache:
+        return _body_cache[url]
+    body = None
+    try:
+        raw = requests.get(url, headers=HEADERS, timeout=20).content
+        text = raw.decode("utf-8", "replace")
+        for cls in ("articleContent", "article-content", "entry-content",
+                    "post-content", "richtext"):
+            m = re.search(rf'(?is)class="[^"]*{cls}[^"]*"[^>]*>(.*)', text)
+            if not m:
+                continue
+            chunk = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", m.group(1))
+            chunk = re.sub(r"<[^>]+>", " ", chunk)
+            chunk = re.sub(r"\s+", " ", html.unescape(chunk)).strip()
+            if len(chunk) > 40:
+                body = chunk[:limit]
+                break
+    except Exception:
+        body = None
+    _body_cache[url] = body
+    return body
+
+
 def load_state():
     try:
         return json.loads(STATE_PATH.read_text("utf-8"))
@@ -702,6 +733,12 @@ def post_discord(item, source):
             og = clean_summary(og_desc or "")
             if og and not is_title_echo(og, en_title):
                 desc = og
+    # Sources whose feed has no real summary (Perfect World notices) → pull the
+    # actual article text off the page so the post has concrete content.
+    if not desc and source.get("fetch_body") and link:
+        body = clean_summary(fetch_article_body(link) or "")
+        if body and not is_title_echo(body, en_title):
+            desc = body
 
     parts = []
     if desc:                           # the real English article excerpt, if any
