@@ -164,13 +164,19 @@ def topic_emoji(title):
     return classify(title)[0]
 
 
-def clean_summary(text, limit=480):
-    """Readable description: drop tags + WordPress 'The post … appeared first' junk."""
+def clean_summary(text, limit=480, keep_breaks=False):
+    """Readable description: drop tags + WordPress 'The post … appeared first' junk.
+    With keep_breaks, blank-line paragraph breaks are preserved for readability."""
     text = re.sub(r"<[^>]+>", " ", text or "")
     text = html.unescape(text)
     text = re.sub(r"(?is)\bthe post\b.*?\bappeared first on\b.*$", "", text)
     text = text.replace("[…]", " ").replace("[&hellip;]", " ")
-    text = re.sub(r"\s+", " ", text).strip()
+    if keep_breaks:
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"[ \t]*\n[ \t]*", "\n", text)
+        text = re.sub(r"\n{2,}", "\n\n", text).strip()
+    else:
+        text = re.sub(r"\s+", " ", text).strip()
     if len(text) > limit:
         text = text[:limit].rsplit(" ", 1)[0].rstrip(" ,;:.") + " …"
     return text
@@ -206,6 +212,23 @@ def _chunk_text(text, size):
     if cur:
         chunks.append(cur)
     return chunks
+
+
+def _first_sentences(text, maxlen=280):
+    """The opening sentence(s) of `text` (markdown stripped) up to ~maxlen — a
+    fallback TL;DR when a site gives no og:description."""
+    plain = re.sub(r"[*_`#>|]", "", text or "").replace("\n", " ")
+    plain = re.sub(r"\s+", " ", plain).strip()
+    if not plain:
+        return ""
+    out = ""
+    for s in re.split(r"(?<=[.!?…])\s+", plain):
+        if out and len(out) + len(s) + 1 > maxlen:
+            break
+        out = (out + " " + s).strip()
+        if len(out) >= maxlen * 0.5 and out.endswith((".", "!", "?", "…")):
+            break
+    return out[:maxlen].rstrip()
 
 
 def _alnum(s):
@@ -383,38 +406,46 @@ EMBED_TOTAL_MAX = 5800   # Discord caps ALL embed text in one message at 6000
 
 
 def _trafilatura_extract(raw, limit=BODY_LIMIT):
-    """Clean MAIN article text via trafilatura (handles arbitrary news sites far
-    better than regex). `raw` is the page bytes (so encoding is auto-detected).
-    Strips breadcrumb/date lines, keeps paragraph breaks, trims to `limit` on a
-    word boundary. Returns None if unavailable, empty, or clearly junk (paywall
-    stubs are short)."""
+    """Clean, READABLE main article text via trafilatura with markdown formatting
+    kept (paragraph breaks, bold, headings) so the post isn't a wall of text.
+    `raw` is page bytes (encoding auto-detected). Headings → bold, tables and
+    breadcrumb/date/leading-label lines dropped, links flattened. Returns None if
+    unavailable/empty/junk (paywall stubs are short)."""
     if not trafilatura:
         return None
     try:
-        txt = trafilatura.extract(raw, include_comments=False,
+        txt = trafilatura.extract(raw, include_formatting=True, include_comments=False,
                                   include_tables=False, favor_precision=True)
     except Exception:
         txt = None
     if not txt:
         return None
-    lines, started = [], False
+    out, started = [], False
     for ln in txt.split("\n"):
-        ln = ln.strip()
-        if not ln:
+        s = ln.strip()
+        if not s:
+            out.append("")                            # keep paragraph breaks
             continue
-        if ">" in ln and len(ln) < 70:               # breadcrumb "A>B>News"
+        if s.startswith("|") or re.fullmatch(r"[-|:\s]+", s):   # table row
             continue
-        if re.fullmatch(r"\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2}", ln):  # bare date
+        if ">" in s and len(s) < 70 and not s.startswith(">"):  # breadcrumb
             continue
+        if re.fullmatch(r"\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2}", s):  # bare date
+            continue
+        h = re.match(r"^#{1,6}\s+(.*)", s)            # heading → bold line
+        if h:
+            s = f"**{h.group(1).strip().rstrip('#').strip()}**"
+        s = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", s)    # drop image markdown
+        s = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", s)  # link → its text
+        s = re.sub(r"\*\*\s*(.+?)\s*\*\*", r"**\1**", s)  # tidy bold spacing
         if not started:
-            # skip leading section labels / repeated headline (short lines that
-            # aren't full sentences) until the real prose starts
-            if len(ln) < 80 and not re.search(r'[.!?…]["\')”]?$', ln):
+            plain = re.sub(r"[*_#>`|]", "", s).strip()
+            if len(plain) < 80 and not re.search(r'[.!?…]["\')”]?$', plain):
                 continue
             started = True
-        lines.append(ln)
-    body = "\n\n".join(lines).strip()
-    if len(body) < 120:                              # paywall/login stub → junk
+        out.append(s)
+    body = re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+    if len(re.sub(r"[*_#>`|\s]", "", body)) < 120:    # paywall/login stub → junk
         return None
     if len(body) > limit:
         body = body[:limit].rsplit(" ", 1)[0].rstrip(" ,;:.") + " …"
@@ -536,12 +567,13 @@ _article_cache = {}
 
 
 def fetch_article(url):
-    """(main_text, [image_urls]) for an article page from ONE cached fetch.
-    Text prefers real extracted body (trafilatura), then og:description, then a
-    regex body for sites whose og is a generic site-wide blurb."""
+    """(main_text, [image_urls], summary) for an article from ONE cached fetch.
+    main_text prefers the real extracted body (trafilatura, formatted), then
+    og:description, then a regex body. summary is the short og:description (a
+    ready-made TL;DR), or None when it's just a generic site-wide blurb."""
     if url in _article_cache:
         return _article_cache[url]
-    result = (None, [])
+    result = (None, [], None)
     raw = _get_page(url)
     if raw:
         text = raw.decode("utf-8", "replace")
@@ -559,7 +591,8 @@ def fetch_article(url):
             desc = og_desc
         else:
             desc = _extract_body(text) or og_desc
-        result = (desc, _extract_images(text, url, og_image))
+        summary = None if _looks_generic(og_desc) else og_desc
+        result = (desc, _extract_images(text, url, og_image), summary)
     _article_cache[url] = result
     return result
 
@@ -929,30 +962,39 @@ def post_discord(item, source):
     # Steam carry genuine excerpts and pass. For `resolve_content` sources with
     # no real excerpt, pull the article's og:description so the post has actual
     # content instead of only a title.
-    desc = clean_summary(item.get("summary"), BODY_LIMIT)
+    # Fetch the article ONCE (cached) → formatted body + images + short summary.
+    art_body, art_images, art_summary = (None, [], None)
+    if link and (source.get("resolve_content") or source.get("fetch_body")
+                 or source.get("og_image")):
+        art_body, art_images, art_summary = fetch_article(link)
+
+    desc = clean_summary(item.get("summary"), BODY_LIMIT, keep_breaks=True)  # RSS excerpt
     if is_title_echo(desc, en_title):
         desc = ""
-    if source.get("resolve_content") and link and "news.google.com" not in link:
-        og_desc, _ = fetch_article(link)
-        if not desc:
-            og = clean_summary(og_desc or "", BODY_LIMIT)
-            if og and not is_title_echo(og, en_title) and not _looks_generic(og):
-                desc = og
-    # `fetch_body` sources → pull the article's full text off the page and use it
-    # when it's richer than the feed excerpt (Perfect World has none; neverness.gg
-    # ships only a short excerpt). Gives the post the complete article, not a stub.
-    if source.get("fetch_body") and link:
-        body = clean_summary(fetch_article_body(link) or "", BODY_LIMIT)
-        if body and not is_title_echo(body, en_title) and len(body) > len(desc):
-            desc = body
+    # Google News feeds carry no real body → use the article's full text.
+    if (source.get("resolve_content") and not desc and art_body
+            and not is_title_echo(art_body, en_title) and not _looks_generic(art_body)):
+        desc = art_body
+    # PW / neverness.gg → use the full article when it's richer than the excerpt.
+    if (source.get("fetch_body") and art_body
+            and not is_title_echo(art_body, en_title) and len(art_body) > len(desc)):
+        desc = art_body
+
+    # A short TL;DR: the site's own og:description, else the body's first sentences.
+    summary = art_summary if (art_summary and not is_title_echo(art_summary, en_title)) else None
+    if not desc and summary:                # nothing but a summary → make it the body
+        desc, summary = summary, None
+    if not summary and desc:
+        summary = _first_sentences(desc, 280)
+    # drop a TL;DR that just repeats the body's opening (e.g. WordPress excerpts)
+    if summary and desc and _alnum(desc).startswith(_alnum(summary)[:80]):
+        summary = None
 
     fields = []
-    # Redeem codes, if any, get a prominent full-width field at the top.
     codes = extract_codes(item["title"], item.get("summary"))
     if codes:
         fields.append({"name": "🎁 Code",
                        "value": " ".join(f"`{c}`" for c in codes), "inline": False})
-    # A row of inline fields — informative AND it forces the embed to widen.
     when = fmt_vn(item.get("ts"))
     if when:
         fields.append({"name": "📅 Đăng lúc", "value": when, "inline": True})
@@ -961,25 +1003,22 @@ def post_discord(item, source):
         fields.append({"name": "🔗 Chi tiết",
                        "value": f"[Mở bài viết ›]({link})", "inline": True})
 
-    # Up to 4 real content images (og:image + article images) → a gallery.
-    images = []
-    if link and (source.get("resolve_content") or source.get("fetch_body")
-                 or source.get("og_image")):
-        images = fetch_article(link)[1]
-    if not images:
-        single = item.get("image") or source.get("default_image")
-        images = [single] if single else []
+    # Up to 4 real content images → a gallery.
+    images = art_images or ([item.get("image")] if item.get("image") else [])
     images = images[:4] or ([source["default_image"]] if source.get("default_image") else [])
 
-    # Full English article, category badge on top, split into embeds that respect
-    # Discord's per-description cap (badge rides on the first chunk).
+    # Compose the first embed: category badge, a 📌 Tóm tắt (TL;DR) block, then
+    # the formatted article. Split the article across embeds within Discord's cap.
     badge = f"{cat_emoji} `{cat_label}`"
-    body_chunks = _chunk_text(desc, EMBED_DESC_MAX - len(badge) - 4) if desc else []
+    header = badge + (f"\n\n📌 **Tóm tắt**\n> {summary}" if summary else "")
+    avail = EMBED_DESC_MAX - len(header) - 24
+    body_chunks = _chunk_text(desc, avail) if (desc and avail > 400) else (
+        _chunk_text(desc, EMBED_DESC_MAX) if desc else [])
     if body_chunks:
-        en_chunks = [f"{badge}\n\n{body_chunks[0]}"] + body_chunks[1:]
+        en_chunks = [f"{header}\n\n📖 **Chi tiết**\n\n{body_chunks[0]}"] + body_chunks[1:]
     else:
-        en_chunks = [badge]
-    embed["description"] = en_chunks[0]
+        en_chunks = [header]
+    embed["description"] = en_chunks[0][:4096]
     embed["fields"] = fields
     embeds = [embed]
     for ch in en_chunks[1:]:               # continuation embeds (no url → no merge)
@@ -1318,10 +1357,10 @@ def main():
                 if src.get("resolve_content") and "news.google.com" in (it.get("link") or ""):
                     real = resolve_google_news(it["link"])
                     if real and "news.google.com" not in real:
-                        og_desc, imgs = fetch_article(real)
+                        og_desc, imgs, summ = fetch_article(real)
                         log(f"       🔗 {real[:80]}")
                         log(f"       📄 {(clean_summary(og_desc or '') or '(no body)')[:120]}")
-                        log(f"       🖼️ {len(imgs)} image(s)")
+                        log(f"       🖼️ {len(imgs)} image(s) | tóm tắt: {(summ or '-')[:60]}")
                     else:
                         log("       🔗 (decode failed → falls back to title + banner)")
             continue
