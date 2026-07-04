@@ -309,19 +309,41 @@ def fetch_og_image(url):
         return None
 
 
+_CONTENT_CLASSES = ("articleContent", "article-content", "entry-content",
+                    "post-content", "richtext")
+
+
+def _extract_body(text, limit=700):
+    """Pull the main article text out of page HTML by finding a known content
+    container. Returns cleaned text or None."""
+    for cls in _CONTENT_CLASSES:
+        m = re.search(rf'(?is)class="[^"]*{cls}[^"]*"[^>]*>(.*)', text)
+        if not m:
+            continue
+        chunk = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", m.group(1))
+        chunk = re.sub(r"<[^>]+>", " ", chunk)
+        chunk = re.sub(r"\s+", " ", html.unescape(chunk)).strip()
+        if len(chunk) > 40:
+            return chunk[:limit]
+    return None
+
+
 _og_cache = {}
 
 
 def fetch_og(url):
-    """Return (description, image_url) from a page's OpenGraph/meta tags in ONE
-    request (cached). Quote delimiters are captured with a back-reference so an
-    apostrophe inside the text (e.g. "Don't") doesn't cut it short. Either value
-    may be None; on any failure both are None."""
+    """Return (description, image_url) from a page in ONE request (cached).
+    Prefers the REAL article body over og:description — some sites (Perfect
+    World) use one generic site-wide og:description on every page, so the actual
+    article text is the only concrete content. Quote delimiters use a
+    back-reference so an apostrophe ("Don't") doesn't truncate. Either value may
+    be None; on failure both are None."""
     if url in _og_cache:
         return _og_cache[url]
     result = (None, None)
     try:
-        text = requests.get(url, headers=HEADERS, timeout=20, allow_redirects=True).text
+        text = requests.get(url, headers=HEADERS, timeout=20,
+                            allow_redirects=True).content.decode("utf-8", "replace")
 
         def meta(*pats):
             for p in pats:
@@ -330,11 +352,14 @@ def fetch_og(url):
                     return html.unescape(m.group(m.lastindex).strip())
             return None
 
-        desc = meta(r'<meta[^>]+property=["\']og:description["\'][^>]+content=(["\'])(.*?)\1',
-                    r'<meta[^>]+name=["\']description["\'][^>]+content=(["\'])(.*?)\1',
-                    r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:description["\']')
+        og_desc = meta(r'<meta[^>]+property=["\']og:description["\'][^>]+content=(["\'])(.*?)\1',
+                       r'<meta[^>]+name=["\']description["\'][^>]+content=(["\'])(.*?)\1',
+                       r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:description["\']')
         image = meta(r'<meta[^>]+property=["\']og:image["\'][^>]+content=(["\'])(.*?)\1',
                      r'<meta[^>]+content=(["\'])(.*?)\1[^>]+property=["\']og:image["\']')
+        body = _extract_body(text)
+        # a substantial article body beats a short/generic og:description
+        desc = body if (body and len(body) >= 120) else og_desc
         result = (desc, image)
     except Exception:
         result = (None, None)
@@ -388,27 +413,15 @@ _body_cache = {}
 
 
 def fetch_article_body(url, limit=700):
-    """Extract the main article text from a news page whose feed carries no real
-    summary (e.g. Perfect World official notices — maintenance, account actions,
-    events). Tries the common content containers and returns cleaned text, or
-    None. Cached; decoded as UTF-8 so dashes/quotes don't mojibake."""
+    """The main article text from a news page whose feed carries no real summary
+    (e.g. Perfect World official notices — maintenance, account actions, events).
+    Cached; decoded as UTF-8 so dashes/quotes don't mojibake."""
     if url in _body_cache:
         return _body_cache[url]
     body = None
     try:
-        raw = requests.get(url, headers=HEADERS, timeout=20).content
-        text = raw.decode("utf-8", "replace")
-        for cls in ("articleContent", "article-content", "entry-content",
-                    "post-content", "richtext"):
-            m = re.search(rf'(?is)class="[^"]*{cls}[^"]*"[^>]*>(.*)', text)
-            if not m:
-                continue
-            chunk = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", m.group(1))
-            chunk = re.sub(r"<[^>]+>", " ", chunk)
-            chunk = re.sub(r"\s+", " ", html.unescape(chunk)).strip()
-            if len(chunk) > 40:
-                body = chunk[:limit]
-                break
+        text = requests.get(url, headers=HEADERS, timeout=20).content.decode("utf-8", "replace")
+        body = _extract_body(text, limit)
     except Exception:
         body = None
     _body_cache[url] = body
