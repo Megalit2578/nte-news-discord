@@ -1,34 +1,4 @@
 {
-  "Official — Perfect World": [
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260714/263143.html",
-    "https://nte.perfectworld.com/en/article/news/gameevent/20260708/263085.html",
-    "https://nte.perfectworld.com/en/article/news/gamenews/20260708/263057.html",
-    "https://nte.perfectworld.com/en/article/news/gameevent/20260703/262998.html",
-    "https://nte.perfectworld.com/en/article/news/gamenews/20260706/263029.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260706/263019.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260629/262911.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260623/262810.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260622/262793.html"
-  ],
-  "Steam — NTE": [
-    "1838407329258836",
-    "1837955055362579",
-    "1836506165582164",
-    "1836506165580042",
-    "1836506165577421",
-    "1836506165556394",
-    "1833334318573778"
-  ],
-  "Leaks — r/NTELeaks": [
-    "t3_1usc314",
-    "t3_1um8xbq",
-    "t3_1ukcor5",
-    "t3_1usqeoz",
-    "t3_1ukcjn6",
-    "t3_1ujt0to",
-    "t3_1un8vc9",
-    "t3_1uiw5m8"
-  ],
   "Reddit — r/NevernessToEverness": [
     "t3_1uxxd1s",
     "t3_1uxrwlf",
@@ -105,6 +75,7 @@
     "CBMiiAFBVV95cUxOZ3Zmd3FnbjJOdXgwVFRmYVFlNkFyaXcyZkdndmJpdUFpaWp0TE9jNV9wUGxwRlVxdzdlQVVfWFAtMHVrSkRvblNFRldmUFg1NmJmQnhvekVOZWNjTEtKZXJ2Zk1HaWtQZDhxckJheUE1Ty1BelhJZlNoSG4wUDVWQmc1YmlvSmJS",
     "CBMinwFBVV95cUxOaThuN1JpeEs2dVEweU9Jd1JWSkdSU3FBZ2R2WktyOFBOZS1sekRRU2pGVlJ4QzJ3cUw2bXpWdkE0cU1JTVBnQ1BaT0VLcEFsQWVxdFFPTUVHR0FqWmRuM3BpaWRWbmtid0o2NDlMLURydHRCSWJIYjljMjNwVTNmdUVqY0RqbTVUeUdkU0w0c3FYQVI0aEJsS0xSeDAyVG8",
     "CBMipAFBVV95cUxNX1kwd2lGelJPeThIWnJOQktmU2VqZno0b1R4RXJNMzQtdWNSSThtR0NUVGFXZkRTNFAxbFB6ZW9mVWhsdndjbkZUb2hOTkdHZmotWHlNT2xmQjl1VW5zVll2VjhtYjRvNHQ0QmFqeW1XV2FDNkZKNVMxLXFfZk9hM21YUFNLLVBnbF9vWnZFdy1mNDlrYVB0aFRGZ3pkaklmcmFCRA",
+    "CBMiekFVX3lxTE9Gby1odC1FSEtwVW1jRWl5enRmSWdzbjVmZGFraHdNUWltdmhIRXBrRVdQTGtEbmc0NUc3bk9YZ1FSWG5YOFJ6bWc2Tk1MM1hWTFkyZkdDTDhvblI3WG1EcmRISmlxdUlWaHh3cEpWNlI4UEJiRksyN0dn",
     "CBMiZ0FVX3lxTE5kc2FrM1d5MVNuTlptZWxjYmt3X1BvQnlPZldxc3kydnZRSExvY1dia0RWSTROdkhQUEV5ZFVMM1ZvMGR2aXZYNlVMQVMxTU9zb3hCUVRXZTdGVi1DbTlVa1BSYUJ6SkU",
     "CBMiakFVX3lxTE53cHlucm9sdVBwUWhxU21aOHJoVTU3VlhYc3dVUXpQdDV5S19MMW1zYjg0SFJuYUx6Z0tYWDM3eTA4alVTMkZoVi1NZFVkdUF0VXp6VEdDUXhxZGdSSXI3UzNwXzU5VTFPWkE",
     "CBMiW0FVX3lxTE1JUGstejh4Z0FnVGhiWm42amFFdEs0UHJnMHRXYzJESkRBVmMxZ3NmSzRDSW5DUEdsb3JNdEdmdGZPRzNveGNZNlFtQkpfRVNtV2l2OFFWakhSaUXSAWBBVV95cUxOeFN6WlhhZzlPMjYwNS0yZnAxUjhfNmRub0tXblRPNm44U0Y1MV95bWd3OWVOd2RjY2w2aE9wbFpTdmItdjloQXVaci1VVmY2d2ozYTdrUFNaYWptU1VKdjE",
@@ -114,22 +85,21 @@
     "CBMiYkFVX3lxTE5pUWp2YzVaenU5NEZOSUR3a2FTQjZuZ01DdWxHRDQ0c3BoMlhrZkpJMnQ1VEpwT3hBUE1jNER1SzRmY3pnTjNwYWZIME9fSGVEWUI2RDNBS1RWemFjbEpwSzB3",
     "CBMiZkFVX3lxTE51ZG41Tk81MURIeVJhN3RpZkhjZUI2WlhPa0RJdE5ZYmkxdGdLOXRjTGFRajhGbFFxRTE1TDM0OUNwdlFmUFE5RTNPZTA2dWNmMWprc2Fya1BrcmE2VndHb2tua0p3Zw",
     "CBMiakFVX3lxTFBSV1VYYkRUaXphcmxJVmVwbzlGU1ZOWG9zRUVSeGE1U09oZmh6WTNBaF8yR2ZtaVVqcW9Pcm4ydm5KV09fZVVpMDY1V1ZyYXcwSGVSaUR1T25pS3ZEblFCaGVJQnBsUjA1d0E",
-    "CBMilwFBVV95cUxQUUpKWVU1a0kyZUlycE5NU0F4RmJEeEFvR2xVMWU0NkxEMkhSYnp1YXQxSkx3dzB5d2w1TEx6cEhMRE42aGNGdXVnN0ZuRW1aOXBtLWlZLWNyM2s5ZGR2VlJ2dUNBcUlzdXA2aUFBZ3hXYU9JRGs1WjZRaUtNUThobktZZEprRjV2MnR5TkR6ZGdRQy0tZE8w",
     "CBMiowFBVV95cUxNUTdoeXhoREFnVzBJRjhzZG83VVhGWlNITUZUaEV4aDUwWUtDVFFHemJOdzhxX2lpZmM1R2FtVjR4Zjc0cXd2ZE1JYUVBWlczXzlpUEgtTkFqZ1F2YVJhSmRteUg2SzhYeS1JWTlrcE9DMy1iVGkwOTVXTXhvd1pFR19XUGJ0WGZHY25QSHhGVEVHZlRvd3ZPdHZCTlp3VTFBS2pr",
     "CBMigAFBVV95cUxNVjNlSzFnSHBwVmJodjItUGVlcElINXdtajU5dkRCX0JMdjY5QllleG44Y3pxRGhJUDk1LVcxZmx6YXY5b0xMR2VfN1ZuZ3NDVU05dDZhMHF5MGFGMTNrd3EwVGJiek9OanY1QlItYzVpWXVGc2Eyb05DcEZ0eThxUg",
     "CBMinwFBVV95cUxPODVZOWlPQVktQzY5RHdzVmp6SmZhR29iSVBxWlYyVVUxOThIdjRILTJ4Nm5QR1l0SXdlRl8xcFk3RzZsZ3hCWW04ZVdBbS1RTXFwdUdlczFUVTMzaUFVbFA2TVBmWVVCSERGSGFzcFBpeXFiejZmc2RWT0l6VUtucTllbjlKWWV4ZHlkTGxJQlFfd1JTMUd3OVdRYjh3WUE",
+    "CBMilwFBVV95cUxQUUpKWVU1a0kyZUlycE5NU0F4RmJEeEFvR2xVMWU0NkxEMkhSYnp1YXQxSkx3dzB5d2w1TEx6cEhMRE42aGNGdXVnN0ZuRW1aOXBtLWlZLWNyM2s5ZGR2VlJ2dUNBcUlzdXA2aUFBZ3hXYU9JRGs1WjZRaUtNUThobktZZEprRjV2MnR5TkR6ZGdRQy0tZE8w",
     "CBMisAFBVV95cUxOazZteW5vbW1uNzV3OWtHT0NWeHRYLVo2eGpyVTB5NjhxOUd5X2tHbnBqT0V4ZUJjRS03cVJnV3J5SlViWkxxM1pMeHZHU0VMMDZ5TThZQVN4OUpfWV9QVGZ1ZmRtb2lyOHRkNDlweWdzX2ItSDllbTdERjNsdVV1ZzJaUFoyaWtiRFdKMXFCazBSeHhseFpzVUI1UjB0MFhMMW4ydmwtNTBwVFNnWk96Vw",
     "CBMiaEFVX3lxTE5hQTdTVG80bldGaGdmNnVyZEY0SHVjVDhTVjlxQ21TNGlpcHJZYnNlUXpmS2lablVBWGp6QjlaOFVETDBSUnZJekRXNnUzZmxCYXhOREg3VUVqQWRQaFdsZXJHSUtEeU4y",
     "CBMifEFVX3lxTE1Ta3A1ZzU5SEhtdUlTR0VyVmZtRGJWd2pvQ2dkTFlvd2hTTkdKWEhhWW9GQkczZjQ2WVM0THc2TXBUaTJ1dG1vQXZhTkJvbXRnNW05V1hmSldLbU9hVmNhV3VwVVFnT2lMNU55QlA0cXJGTVF2RlNoR1hSMDE",
     "CBMihgFBVV95cUxPZEdwVHJsOTlNMGF3RXhLWUItUmdoYkNVck1yd3Uya2dmZ0hHNHVHVExYdS1JdVByMkpfeGVtQXY2bGNjdUlabDlpUjJtQWtuZmtGWXEwQldWbDc5RWgtUFRtNzJ5RlBKcmN3Y180YmhsTjFYcGxDelRlWFN2TnRVUDFYZWZDUQ",
-    "CBMi5AFBVV95cUxNQmVYdkFmS2tUQWhPc1Z2aXR3S2djSDFfRDV5VnJET1BvRnZfZTlmeGtrWEJuMXRvTE4tcTVzNllsU0lFS2p4aVhfN2lEcFdqQW1kbkN3ZzRzbXNWVElWSUQ3dERDOGtQR28wSXZWX3E0TklvQjRYV3JFRHJlb1h6N1RSRWRMdF8zTzJyYnoxN0JiU3pjbWx2NldySGd3TmZKeHVzNjh0X1ZaMHhVNVh2Y3RXSGtxSHpMVzF0NzVtVVNMTzJhNFQ2c0t2WlphcUxoYkFSaC1HaXB0Y3k2N1ZET2FXQl8",
     "CBMiywFBVV95cUxPREVudXVSTUdhd3hSTWFNM3F5VWZXVUZOMGtXQlIwb0c1SUlrbGNPQlFaNHFQRUNJNVFhS0tyZUh0TU9CM1FfWm1CVmpYeGhURlVLUDlMTG9wN0twWE9pU0stX2haaHRpOUV4VzA5RjJBeTEwOGlieW1tNmhSdEdSa3JsemVNWkNEQUJpZGhkemdwVnluZWNHckdJWGMzcjRrbWpIWk81ZW5YcGtQbW1NMENreW9lUmdFc2h0VnFIT3N3ckl6SXF6RHk1VQ",
+    "CBMi5AFBVV95cUxNQmVYdkFmS2tUQWhPc1Z2aXR3S2djSDFfRDV5VnJET1BvRnZfZTlmeGtrWEJuMXRvTE4tcTVzNllsU0lFS2p4aVhfN2lEcFdqQW1kbkN3ZzRzbXNWVElWSUQ3dERDOGtQR28wSXZWX3E0TklvQjRYV3JFRHJlb1h6N1RSRWRMdF8zTzJyYnoxN0JiU3pjbWx2NldySGd3TmZKeHVzNjh0X1ZaMHhVNVh2Y3RXSGtxSHpMVzF0NzVtVVNMTzJhNFQ2c0t2WlphcUxoYkFSaC1HaXB0Y3k2N1ZET2FXQl8",
     "CBMiqgFBVV95cUxNeU1UeVhHejRBOWdDbGhaSllfVkh4MlZURkQ2bkl5bU40aWUwaWtQb0ItODVLWUk2aENGUmh4RnhrNnpFSmx6X1ByQTVDTnJPWnRJTmtNTW9YTkdpUEFyZU1SbF9teXk3bjVhVHAwQk8xLS03clRsY3FUTWExaHg2X3pYZ2hNVkdQMVBrc0x2Y1NCbl9tcTByTThJVUMtUHREeWpMVWFscmFXdw",
     "CBMif0FVX3lxTE85N0hydmMtZ04zbzR6MDhubmlvaWo1SURkbFNZcjlMdFNpVm53bFd1aDFPLXBmYlZXNzZqcjZVaTNyX2dPT04tMWRIQjg5TEdxQ0JBS3hVcEkyTEg1VTBNd0Z1cDRWMUJTYTJKNGR5cVJqbmFwb1NoZW5hcWxwM1E",
     "CBMikgFBVV95cUxQVnFycS1TeWtoOUZZenVNY0J2NVR1emJFS24tWERVRS1LeTM1U0V6Rng3eGtqaWhBSGlpaWFpd2JTYTlQdFZRejRObG41OFFpMEU2WkhaN2pidVYwczZJN3RGcGNHdk5sOEpic0NVYUJQZ1FBRkxGZXJ2Y3NHcGRpcnZneFJUTjJCY2hSZGRUamtaUQ",
     "CBMiqAFBVV95cUxOZC1lVFQ0SEpnWmhwb2dRMF96dzNQY3N1cGhfQzVoa011WVJ5UWVLZzBzbXQtRGFaTzRSOHkyLWJBSlN0SmJxMThHbUxDRFVTQTYwUXdIeFhhYllvZlluVFpuQUlDNkNxQ0hzWkpCaHRoT2VQbGNVTkp6T081RVhFUVdxSklpMnNZRTFMaTJmZm1WWGx3UjBiWk40MzZkeEpyTm10TUlLTS0",
     "CBMiRkFVX3lxTFBUMWpOMmdSSVp6NkthLS1XVXhXWTNmZ0JPdXprUDBxeW1fOWU1UTF6dW5CTTkzU1BVNFB3aHlXLXVfLWVmVUE",
-    "CBMiekFVX3lxTE9Gby1odC1FSEtwVW1jRWl5enRmSWdzbjVmZGFraHdNUWltdmhIRXBrRVdQTGtEbmc0NUc3bk9YZ1FSWG5YOFJ6bWc2Tk1MM1hWTFkyZkdDTDhvblI3WG1EcmRISmlxdUlWaHh3cEpWNlI4UEJiRksyN0dn",
     "CBMibkFVX3lxTE1xbnpIbWl3X0xMMFZBbmVtUjBiaTl0LVo1REFvVF9EdkFUNlNtSTNMUi1pUXFTaTQ1d3NObEdUeWE5MXRzNnR4YXFsd2lNeWRjZWo2RTR2OEttMUpNR2dWUENuVHpkNW1fdHFIZXdB",
     "CBMieEFVX3lxTE5vX01FcFM3RzgxRkhhVFA2dGozTHZ6d3dXN2phMjZPMnJLYlo2RkJnQjBnNnNPa0YwMmtGVjJpOHBqNjlGTFVMNl9WMElLZ3I5U09BVUZxbERQcjlvLXhDUEVkc05qYVd6U1hGTURzc2tOQzZJWlpRaA",
     "CBMidEFVX3lxTE41VEFmQ0psRTVDMXpGRVJlWkRoYUV0ekRrbDk3SVY2X01rV0ZEQ1JNSkVOZDhtWjEwUURzSlBkek84NzFwSWxVcUpsRkdlVjlIUEJsVjh5dWptbVJSU29UdjNPWGZHaFo2ZlZCblVBV3UxUUtK",
@@ -242,6 +212,40 @@
     "CBMifkFVX3lxTE8tR3JPN2dCVWZQZTFWVHNmaTJVN3hYOTdWSVo2T1pHMWZfYUoxanM1V2pBZEZjYzh6UnRKb0hXYmw2UGgxa0p2WWdqUnBTa0huTVhhVVFsNW82VVZwdnRBOXhocUR5N3RUb1JJM0NvaGJfVXhyWGVUVnRCMG5Jdw",
     "CBMiS0FVX3lxTE1FLWxrN2I2aXZ2N3NwT0RsYjBSeWkyUWRhV1lwQU54ZjVwRW1BbzR1bHl5WC1fRXN5WW1nQTNLaU9aalNicG9jTkpVd9IBUEFVX3lxTE03NTdQc2x2UnBRcGVZa3BEdWNHbUVMUUMyRk04Z0NUbVFqOUNqdGFQM2lxNGNKRWJzTHhwcHJXQTl4U3Y1S21sdlV2TTh0VV9V"
   ],
+  "Community — neverness.gg": [
+    "https://neverness.gg/?p=1896",
+    "https://neverness.gg/?p=806",
+    "https://neverness.gg/?p=311",
+    "https://neverness.gg/?p=1854",
+    "https://neverness.gg/?p=1850",
+    "https://neverness.gg/?p=1826",
+    "https://neverness.gg/?p=1764",
+    "https://neverness.gg/?p=1759",
+    "https://neverness.gg/?p=1751",
+    "https://neverness.gg/?p=420",
+    "https://neverness.gg/?p=1659"
+  ],
+  "Official — Perfect World": [
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260714/263143.html",
+    "https://nte.perfectworld.com/en/article/news/gameevent/20260708/263085.html",
+    "https://nte.perfectworld.com/en/article/news/gamenews/20260708/263057.html",
+    "https://nte.perfectworld.com/en/article/news/gameevent/20260703/262998.html",
+    "https://nte.perfectworld.com/en/article/news/gamenews/20260706/263029.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260706/263019.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260629/262911.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260623/262810.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260622/262793.html"
+  ],
+  "Leaks — r/NTELeaks": [
+    "t3_1usc314",
+    "t3_1um8xbq",
+    "t3_1ukcor5",
+    "t3_1usqeoz",
+    "t3_1ukcjn6",
+    "t3_1ujt0to",
+    "t3_1un8vc9",
+    "t3_1uiw5m8"
+  ],
   "YouTube — NTE Global": [
     "yt:video:VZPv-r5DcPo",
     "yt:video:FCPnhwYxtHY",
@@ -278,18 +282,14 @@
     "yt:video:7zomVkm5DQo",
     "yt:video:MAJqNaZ1umc"
   ],
-  "Community — neverness.gg": [
-    "https://neverness.gg/?p=1896",
-    "https://neverness.gg/?p=806",
-    "https://neverness.gg/?p=311",
-    "https://neverness.gg/?p=1854",
-    "https://neverness.gg/?p=1850",
-    "https://neverness.gg/?p=1826",
-    "https://neverness.gg/?p=1764",
-    "https://neverness.gg/?p=1759",
-    "https://neverness.gg/?p=1751",
-    "https://neverness.gg/?p=420",
-    "https://neverness.gg/?p=1659"
+  "Steam — NTE": [
+    "1838407329258836",
+    "1837955055362579",
+    "1836506165582164",
+    "1836506165580042",
+    "1836506165577421",
+    "1836506165556394",
+    "1833334318573778"
   ],
   "__dedup__": [
     "u:steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1836506165556394",
