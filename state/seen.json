@@ -1,4 +1,13 @@
 {
+  "Steam — NTE": [
+    "1838407329258836",
+    "1837955055362579",
+    "1836506165582164",
+    "1836506165580042",
+    "1836506165577421",
+    "1836506165556394",
+    "1833334318573778"
+  ],
   "Google News — NTE": [
     "CBMif0FVX3lxTE5MM0duQUdaaFU5MWF4TVVmMXZpNnM2UmpTTlU2TDl5Z1Faa1pyZnRjLVBFem54VWF6aExOZDh6Y3lqYUR1QnVWTW80N1RVQ2NieF9qZHpGc3BZVmFoS2l2R2xERUxEVnVva0pWd1YtdTQ2NHBubEM5SGVwdHRhRnM",
     "CBMiwAFBVV95cUxOV2EtdVhFU1hOeFhkck9NRTJURzBDWWl3NkxQU191VnlIcjlJWk52NFFhUTNNY25RMDBJaTBEWjZ4bWNoU2lraTVtc0VybGRISm9qLVZyWnFxYjd6RVJpSFhvZzNPLW5mS1ZaOGRKb082T1NvVm1RT3NnVGpNbE12N1dsd1BxQkQwMmNvMlpINkFxN1FBMUtibXFaUUFSV3hfQXFXeDRFc2xxdW5xM2RxQ01XeDJMUnI4TEhkSUQ4Z1g",
@@ -8,7 +17,6 @@
     "CBMimAFBVV95cUxQTDNfQXJMQ1QyZXJPNGpmQmxXWGRiN2xQd1BIMnM5cm5HWTFhaWpLX1lRaEJfUThoLVpLMzZmSWxlQUc5UmVZNEdtOWRIaUZIQUJnY1RhWFRkMy1oU0FuOE1EUWp6THhaTy1vZ3FGd2VrYzI2ODAybUFpUmFoXzRVcmEwRU5melZldWZLRkZ4RF9ZWEdOVlp0dg",
     "CBMiowFBVV95cUxNaVZYNWRQSUxaQjQzbjBPZEJmRlVlaG41NTVnRk5TQm9ianJWM3E5UWJuNl80NHdGUWNESXZ4UlRRb29obDZCblZrdUI5ZzJaOW5QNnZJVEwwRXI3YW91NklFY3U2czBlLU0tODZkYlpraDR2XzdhZ0k5VFN2MWJtd1VnUjZLWDI4TmxHYVNVTlVxZldJX2pDZzFOVU1hWTFaUnZr",
     "CBMiwgFBVV95cUxPMkd0M01sSFVUaGVIT1d4Ni1zZmZkcGE5alUwTmZWWnczR2lBV1hqdHpTd3QyaHFVVHc1WTFJVzEwYkpCdzJkTHZXSlVmWTdOMGpiMVF3VjE0OEZvczhqZVJRMjFibHlCVFhvcU1rekt6UHZPcXQ1LVNPWTNxTDh5UXpnQXZqdVdmODJsOUVDNWwxWTM1WjN6YWpzaHd2NVZ2aE56Ump4alhwbXQ1NXljVlNpUU9EcFl6QlUxb3d1cDJNZw",
-    "CBMie0FVX3lxTE9qdjk2RFhWMVBHdXdib2tmWFV4M2lGcWZxbXFSYnZILU0tdnlUekNyeXNmY0xCbE43LUZDeTBWclVfdjN1V2JQSmd3TURZUTNIdjdFRDM2ZWNfNkhOMHVzc3dYZEtPYXg1akVqRjhTWnFpTmVtckpkSzVCcw",
     "CBMinAFBVV95cUxOX25YSXQwRlBXbWwyaHdidjhGUW1HNF8wUVRhR005TXBBZDBYRG91UV84T3I3S0tMU2lhYnIxTW5KNy1mS3ZHMXNyNXZheTVCbzlkS01XS3d0S1ZMX0Zsa0dCN2FHdXByNHczWlg1Q2g4LUcya3p5Z1VlWHNXTDJvZ0tYNmRNdndfOFNieHhSWU14UUtjNDJyUGhscjM",
     "CBMilAFBVV95cUxNOVphX1JhbmtqS2R3dVE4dHYtZk5Fa0d2MUxuY1pwcjdaY1BFYzB2Ry04b01jOVZXOHNGMGRVZzh5UVdFTDBaeXpXUnAyMEk1NVdYUktuMkJVNFp6YlVkaUZSY1lpS3FwTGtZVjI2UHJjaVNFYWRxVm90SGpSLUY2SGlBZjUtT0tKVmFERFFFV3RFU1pq",
     "CBMinAFBVV95cUxPSTBEUDJ3V0diZ0ExMXFHa2JjYXJ5OEFKbklPWjBDVzNYVjdaNV9oUnMwZ1NqQXl4VHZneEVpNWFiZGdINXFMOGZrcnN4dUxENm04ajNzSGZPYkM2Y1B1eXBrc1d0RG12U3UyeEFBQ1ZkTXYwNWlwMGJRaXhrTXJCRFFpRlpFMEdMZmJFZkh1U05BUzh4WElCRDEycV8",
@@ -28,10 +36,10 @@
     "CBMirgFBVV95cUxQN0lGY1BER0V6M2hiaWo0NUcybDdBUFpJUTFYM1FUem9mOWllV1RPcG9QWm1mdGtld3lkV043bU9mWm85RlRTajRCbXpYN1k4RjlUTmpXR3M2RGQtNzRVVG1iUXNyS3h4ODdEc1ljVFlDcmlFTklmUXZNbXJMdEM4NExzZDJRUzRBQXRCRnBqbkJPel9Vakt6QU4zaXY3UUZfOFlUX3htellWTjdieXc",
     "CBMibEFVX3lxTE1zbS1fTTdLTDN6UmZLa2tFdXFWaWxST3RSdHpEQl9JRml0V0JxcG5McjlNYWdST20wQ1AySGZuTWQ4bFNsRDF0c25XNGItOExCOWlfVjZzdU5ESU9vUmstWExIMHd4dkY4ZmtYSQ",
     "CBMiXEFVX3lxTE5iT3NabFBidlN6TEJFbnNDUzVoYnF1cThlRk5IWjg2bjYtUnZheWhKMHFSaXJ1SURfMFRiV0EzU2g1NlNTaTM1NUxkVm90VjlFa1dlbzFkeG5xWWpa",
-    "CBMi1wFBVV95cUxNenE0dnhQZ0R6N2F2c2M5OWc2V29rVm5pNHJaNEhhd3hKd1Q2TjRoQXhfckRCN2NBenl1RGYzenBfYXZ4QVJXSWJ0aDZCUVVOLUR3UWNYazlOQTVkWUxnUVQxT1JzOGFpWk5RT205Y3RPWDRsSjd2NFJSVEtScDQ0YVE2cHBGbXVETTVjeVU4MzVmUk1SOEEzczc5V1R4YW93SlBGRXRmNGpjMjhhU0s2VzNRVm5IS0YxMmQxSHBDM1plM1ltRmg5S0lhTGxhTXZqMjBZRkhwSQ",
+    "CBMilwFBVV95cUxNSWctWkpGMS1JZEZGaVB3VWFzWE81cEVfdVR0cUoxU2FMUDRPaGN5UGcxdW1BSW1vbERPZWUxLUdWejVZVXBQdHRaOWFibnpKVm9Bdlp3UGZselk2QjhHWTBXUzNvdjBPLUpodEdJcy0yZUlsYnNTX1Z3OTJHcl9xS0x4M1Rvd1dDbGZNektLcVhBZjdSODRV",
     "CBMijAFBVV95cUxOVlpuSTl0d1h5VXdvakh2NjF5aElqWW0xcXI4bW5aaDR0QmUzQTBZdEFUUy1uRGRoQW50T3k0V0s1SlgwanhCel9mMnVsRFEzZGlGZzVSbTJkdTVLWGgzRTkwM2JKNGQ4eVNCY0kxcnRyQ1FyZXY5MnFyMmcxdXVOSUJVYk42dnFvM1JMYw",
+    "CBMi1wFBVV95cUxNenE0dnhQZ0R6N2F2c2M5OWc2V29rVm5pNHJaNEhhd3hKd1Q2TjRoQXhfckRCN2NBenl1RGYzenBfYXZ4QVJXSWJ0aDZCUVVOLUR3UWNYazlOQTVkWUxnUVQxT1JzOGFpWk5RT205Y3RPWDRsSjd2NFJSVEtScDQ0YVE2cHBGbXVETTVjeVU4MzVmUk1SOEEzczc5V1R4YW93SlBGRXRmNGpjMjhhU0s2VzNRVm5IS0YxMmQxSHBDM1plM1ltRmg5S0lhTGxhTXZqMjBZRkhwSQ",
     "CBMiXEFVX3lxTE00d2FWLUJ2dnRPajF4RWNVMnNJbGxWQUhOMU1lS1hCZVZqV05ueWp3eXRBczUxcXFlMTNiQ2ZDWHFUYWJSUFY5MkJBQk14TE05U2ZqaElMWG00WFpl",
-    "CBMiXEFVX3lxTE1Ubk5xY3hPYlBoSEViV1U2RzJwTTRBejl1eHRCYld4Vnl1QV90RkxnX0ZFNDlkQ3R2a0ZLRkN1US1xUlZ5dGlXOURhcTdPVXozVkJaX3RsT1RfbGhr",
     "CBMidkFVX3lxTFA5am9tUzU0U29fd3hyT3lQaFBtSGl2QmIwU1oyUE9YU3BoUWlsV0U3QWhERFMteUFCTVItZjkxZFhnX3g4aTVMYXNRNVlWWnN5YktCN1p2LVpVcWg1eWxFREpNYk5GZ0FYUzdBVC1XZ0Z3cm53NGc",
     "CBMirwFBVV95cUxOQUVNeDdOTXRpY2ZFcmR5TE1ydk1hTVcycDIyY2tIMy14RGdfZkp1MzRxOVpFRm5ySEpSMzlGSUNUektzYXVXQUNSd3NzM1ZlTU5MTThyLXV1WGp1aFZQeV9RcWY1SVQ2VkFvM3ViUmpqR3NPbGI3Q3Q1RG5qRXFqdzRKRE82b1BCeXdaeDRXUkpIc1MtZUNSdXZESDNCUmhZY2JUOFRwMG5Md3pCVHEw",
     "CBMilwFBVV95cUxPcHgtYWwwTERkVVRMR0hHTVhIN3RSSnd5MWFrOXQ4elZFeXZZQkw4SEhGZjZaQV9BamZuU2s3bjVkYXh6LUZ6Qmt4dnZtN2VMaFlIOWNPNHh4YnVSWE1NWkVaTi1hX1NxTDZ4WFEyLU1wa2FwZjltdXF4MjUxUDNUNE1HbVBxek9rNzJvSDBqdEM2U2xndWdz",
@@ -65,6 +73,8 @@
     "CBMiywFBVV95cUxPREVudXVSTUdhd3hSTWFNM3F5VWZXVUZOMGtXQlIwb0c1SUlrbGNPQlFaNHFQRUNJNVFhS0tyZUh0TU9CM1FfWm1CVmpYeGhURlVLUDlMTG9wN0twWE9pU0stX2haaHRpOUV4VzA5RjJBeTEwOGlieW1tNmhSdEdSa3JsemVNWkNEQUJpZGhkemdwVnluZWNHckdJWGMzcjRrbWpIWk81ZW5YcGtQbW1NMENreW9lUmdFc2h0VnFIT3N3ckl6SXF6RHk1VQ",
     "CBMif0FVX3lxTE85N0hydmMtZ04zbzR6MDhubmlvaWo1SURkbFNZcjlMdFNpVm53bFd1aDFPLXBmYlZXNzZqcjZVaTNyX2dPT04tMWRIQjg5TEdxQ0JBS3hVcEkyTEg1VTBNd0Z1cDRWMUJTYTJKNGR5cVJqbmFwb1NoZW5hcWxwM1E",
     "CBMikgFBVV95cUxQVnFycS1TeWtoOUZZenVNY0J2NVR1emJFS24tWERVRS1LeTM1U0V6Rng3eGtqaWhBSGlpaWFpd2JTYTlQdFZRejRObG41OFFpMEU2WkhaN2pidVYwczZJN3RGcGNHdk5sOEpic0NVYUJQZ1FBRkxGZXJ2Y3NHcGRpcnZneFJUTjJCY2hSZGRUamtaUQ",
+    "CBMie0FVX3lxTE9qdjk2RFhWMVBHdXdib2tmWFV4M2lGcWZxbXFSYnZILU0tdnlUekNyeXNmY0xCbE43LUZDeTBWclVfdjN1V2JQSmd3TURZUTNIdjdFRDM2ZWNfNkhOMHVzc3dYZEtPYXg1akVqRjhTWnFpTmVtckpkSzVCcw",
+    "CBMiXEFVX3lxTE1Ubk5xY3hPYlBoSEViV1U2RzJwTTRBejl1eHRCYld4Vnl1QV90RkxnX0ZFNDlkQ3R2a0ZLRkN1US1xUlZ5dGlXOURhcTdPVXozVkJaX3RsT1RfbGhr",
     "CBMirgFBVV95cUxPZEdNNGczLTZqV1UzNUxEZDM1eWgxMUNTTGNwVDVBOVozcnhxQ1k4LW0td0JDdlNWNll5RGJPY0RieDk0VVpBbU1PT213cnM4eEVfcng4dHdYZHNoVjEzSEUxelNQcWVURV8xM3VFME9KSE9uWkEzeXZTSkJ3bDVfTi1QSU5hbTJJeWhhNmltVWE3UVZKUEdqMms2TlgwVDFLYWF3dXBjZTM0c3daOFE",
     "CBMilwFBVV95cUxQUUpKWVU1a0kyZUlycE5NU0F4RmJEeEFvR2xVMWU0NkxEMkhSYnp1YXQxSkx3dzB5d2w1TEx6cEhMRE42aGNGdXVnN0ZuRW1aOXBtLWlZLWNyM2s5ZGR2VlJ2dUNBcUlzdXA2aUFBZ3hXYU9JRGs1WjZRaUtNUThobktZZEprRjV2MnR5TkR6ZGdRQy0tZE8w",
     "CBMiqAFBVV95cUxOZC1lVFQ0SEpnWmhwb2dRMF96dzNQY3N1cGhfQzVoa011WVJ5UWVLZzBzbXQtRGFaTzRSOHkyLWJBSlN0SmJxMThHbUxDRFVTQTYwUXdIeFhhYllvZlluVFpuQUlDNkNxQ0hzWkpCaHRoT2VQbGNVTkp6T081RVhFUVdxSklpMnNZRTFMaTJmZm1WWGx3UjBiWk40MzZkeEpyTm10TUlLTS0",
@@ -190,14 +200,15 @@
     "https://nte.perfectworld.com/en/article/news/gamebroad/20260623/262810.html",
     "https://nte.perfectworld.com/en/article/news/gamebroad/20260622/262793.html"
   ],
-  "Steam — NTE": [
-    "1838407329258836",
-    "1837955055362579",
-    "1836506165582164",
-    "1836506165580042",
-    "1836506165577421",
-    "1836506165556394",
-    "1833334318573778"
+  "Leaks — r/NTELeaks": [
+    "t3_1usc314",
+    "t3_1um8xbq",
+    "t3_1ukcor5",
+    "t3_1usqeoz",
+    "t3_1ukcjn6",
+    "t3_1ujt0to",
+    "t3_1un8vc9",
+    "t3_1uiw5m8"
   ],
   "Reddit — r/NevernessToEverness": [
     "t3_1uxxd1s",
@@ -238,29 +249,6 @@
     "t3_1ul7151",
     "t3_1ulxd5b"
   ],
-  "Leaks — r/NTELeaks": [
-    "t3_1usc314",
-    "t3_1um8xbq",
-    "t3_1ukcor5",
-    "t3_1usqeoz",
-    "t3_1ukcjn6",
-    "t3_1ujt0to",
-    "t3_1un8vc9",
-    "t3_1uiw5m8"
-  ],
-  "Community — neverness.gg": [
-    "https://neverness.gg/?p=1896",
-    "https://neverness.gg/?p=806",
-    "https://neverness.gg/?p=311",
-    "https://neverness.gg/?p=1854",
-    "https://neverness.gg/?p=1850",
-    "https://neverness.gg/?p=1826",
-    "https://neverness.gg/?p=1764",
-    "https://neverness.gg/?p=1759",
-    "https://neverness.gg/?p=1751",
-    "https://neverness.gg/?p=420",
-    "https://neverness.gg/?p=1659"
-  ],
   "YouTube — NTE Global": [
     "yt:video:KlJiusiVWbE",
     "yt:video:VZPv-r5DcPo",
@@ -297,6 +285,19 @@
     "yt:video:Kb5fBm2PQX8",
     "yt:video:7zomVkm5DQo",
     "yt:video:MAJqNaZ1umc"
+  ],
+  "Community — neverness.gg": [
+    "https://neverness.gg/?p=1896",
+    "https://neverness.gg/?p=806",
+    "https://neverness.gg/?p=311",
+    "https://neverness.gg/?p=1854",
+    "https://neverness.gg/?p=1850",
+    "https://neverness.gg/?p=1826",
+    "https://neverness.gg/?p=1764",
+    "https://neverness.gg/?p=1759",
+    "https://neverness.gg/?p=1751",
+    "https://neverness.gg/?p=420",
+    "https://neverness.gg/?p=1659"
   ],
   "__dedup__": [
     "u:steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1836506165556394",
@@ -444,7 +445,8 @@
     "t:nte is the anime style rpg worth watching this year and lootbar is how players are keeping up with every chapter",
     "u:youtube.com/shorts/KlJiusiVWbE",
     "t:hethereau wardrobe 999 nights outfit showcase",
-    "t:neverness to everness brought developers hundreds of millions of dollars pc and android lead"
+    "t:neverness to everness brought developers hundreds of millions of dollars pc and android lead",
+    "t:all active neverness to everness codes list"
   ],
   "__digest_log__": [
     {
@@ -1174,6 +1176,13 @@
       "s": "NTE",
       "e": "📰",
       "d": "2026-07-20"
+    },
+    {
+      "t": "All active Neverness to Everness codes list - MSN",
+      "u": "https://news.google.com/rss/articles/CBMilwFBVV95cUxNSWctWkpGMS1JZEZGaVB3VWFzWE81cEVfdVR0cUoxU2FMUDRPaGN5UGcxdW1BSW1vbERPZWUxLUdWejVZVXBQdHRaOWFibnpKVm9Bdlp3UGZselk2QjhHWTBXUzNvdjBPLUpodEdJcy0yZUlsYnNTX1Z3OTJHcl9xS0x4M1Rvd1dDbGZNektLcVhBZjdSODRV?oc=5",
+      "s": "NTE",
+      "e": "🎁",
+      "d": "2026-07-21"
     }
   ],
   "__codes_msg__": "1522581350253592610",
