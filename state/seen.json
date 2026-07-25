@@ -1,30 +1,4 @@
 {
-  "Official — Perfect World": [
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260720/263221.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260714/263143.html",
-    "https://nte.perfectworld.com/en/article/news/gameevent/20260708/263085.html",
-    "https://nte.perfectworld.com/en/article/news/gamenews/20260708/263057.html",
-    "https://nte.perfectworld.com/en/article/news/gameevent/20260703/262998.html",
-    "https://nte.perfectworld.com/en/article/news/gamenews/20260706/263029.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260706/263019.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260629/262911.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260623/262810.html",
-    "https://nte.perfectworld.com/en/article/news/gamebroad/20260622/262793.html"
-  ],
-  "Leaks — r/NTELeaks": [
-    "t3_1v2cjhd",
-    "t3_1uzudae",
-    "t3_1usc314",
-    "t3_1um8xbq",
-    "t3_1v42607",
-    "t3_1ukcor5",
-    "t3_1v1yn93",
-    "t3_1usqeoz",
-    "t3_1ukcjn6",
-    "t3_1ujt0to",
-    "t3_1un8vc9",
-    "t3_1uiw5m8"
-  ],
   "Google News — NTE": [
     "CBMif0FVX3lxTE5MM0duQUdaaFU5MWF4TVVmMXZpNnM2UmpTTlU2TDl5Z1Faa1pyZnRjLVBFem54VWF6aExOZDh6Y3lqYUR1QnVWTW80N1RVQ2NieF9qZHpGc3BZVmFoS2l2R2xERUxEVnVva0pWd1YtdTQ2NHBubEM5SGVwdHRhRnM",
     "CBMif0FVX3lxTE9FZmZDX1VZWkQzUVNYQXVHTnF0bGxmNTlkMHBsQU85MWkxSkR3eWhWbkVqSE1WcUprOVN1S1JGTHFEeHpxQnVQSVZ2U21uell0UDM1c0JWbEpwTnJKcmdJb3Z0WXBwOFN0c1oxclMtLUotVU9STklFaUtmUnBhUW8",
@@ -55,10 +29,10 @@
     "CBMilgFBVV95cUxOdlRoM2xNVzZ0RDJ1SzA1S0R2YmhLcGJGdGVfVzZ3YVRuQi1rTEVsOElLOFU0RVlBU1Q4cXNfSlAtQ3NQbTRVUUtuWnhtV2pCbEFlam9XaC14eGNvR3dueFNZLUdvQmVwd05JdHpOQV9aMUVxYVhXRWY3V3pweVl3YXVPX2JwcUN2TkxqMjhYekdNaHEtbXc",
     "CBMiqAFBVV95cUxQWTE3VnFjS3hNR3BINlM4alBlQ3pGOWQxRzBiTm1DX1VIOGQ1eUMwSkdzM0E2QTYxTGZ3VmN0YzdZaHcwMGVveXVUMm5BOWZzMFZHRjNJVGFWYUFvMmgxT3hCeDU1NUo2VXpYNXBSN2pKWnlVSDFmQTc3UVBaSE5aaHRnTzlvM0tWdGFTWE5ybC1URjdNenFxNzRxeTN6VENSaTBIVmduYWc",
     "CBMirgFBVV95cUxPZEdNNGczLTZqV1UzNUxEZDM1eWgxMUNTTGNwVDVBOVozcnhxQ1k4LW0td0JDdlNWNll5RGJPY0RieDk0VVpBbU1PT213cnM4eEVfcng4dHdYZHNoVjEzSEUxelNQcWVURV8xM3VFME9KSE9uWkEzeXZTSkJ3bDVfTi1QSU5hbTJJeWhhNmltVWE3UVZKUEdqMms2TlgwVDFLYWF3dXBjZTM0c3daOFE",
-    "CBMiakFVX3lxTE0wNm9oX19zcE1QTFZyeExlM29VWFJhX3VMamQ4VHBkdTJ4TGI4OHRYQ0M4Mm81SW50TFJpcnFVRWE5eGxNdEpqMUlYYm4tcllmUGJrTnEycTU4NDZTNm9uRXJiV3psY0RxR1E",
     "CBMie0FVX3lxTE81RDdlUUR1X2tpLXhZZXdnYnVQLWFlTXBwTWwyRTU1bFFVd1QtZjdKdkhPeWV2R0V0SkZzcXhNNXVzTUx0ZjlzYVdzREdvM24yQ0pzNUwxeXhqR3M1Mklrc3dfdDY5OG5XYUhUdHZrWFpSOFhJWXVQcGtyYw",
     "CBMinwFBVV95cUxOaThuN1JpeEs2dVEweU9Jd1JWSkdSU3FBZ2R2WktyOFBOZS1sekRRU2pGVlJ4QzJ3cUw2bXpWdkE0cU1JTVBnQ1BaT0VLcEFsQWVxdFFPTUVHR0FqWmRuM3BpaWRWbmtid0o2NDlMLURydHRCSWJIYjljMjNwVTNmdUVqY0RqbTVUeUdkU0w0c3FYQVI0aEJsS0xSeDAyVG8",
     "CBMioAFBVV95cUxQX2RsS3BFQnFrOGhSeGl5ZXBaM2ZzcG1wZktDM3NBaDlleEFMV3FMaEZMNXBRcnRZRmpvdGxrLU5WOFlZRlRNaVNjUVNPRU9yemJTVC01UDNON0RFNzFyUVM3MEM2dmlQN205S1h0alpyQUIzZ01fZlNabmVCVUF0R2M0dHNQNVdESUdId0NvNE44aDhDN05ZdXlpckF6cmpo",
+    "CBMiakFVX3lxTE0wNm9oX19zcE1QTFZyeExlM29VWFJhX3VMamQ4VHBkdTJ4TGI4OHRYQ0M4Mm81SW50TFJpcnFVRWE5eGxNdEpqMUlYYm4tcllmUGJrTnEycTU4NDZTNm9uRXJiV3psY0RxR1E",
     "CBMiiAFBVV95cUxOZ3Zmd3FnbjJOdXgwVFRmYVFlNkFyaXcyZkdndmJpdUFpaWp0TE9jNV9wUGxwRlVxdzdlQVVfWFAtMHVrSkRvblNFRldmUFg1NmJmQnhvekVOZWNjTEtKZXJ2Zk1HaWtQZDhxckJheUE1Ty1BelhJZlNoSG4wUDVWQmc1YmlvSmJS",
     "CBMipAFBVV95cUxNX1kwd2lGelJPeThIWnJOQktmU2VqZno0b1R4RXJNMzQtdWNSSThtR0NUVGFXZkRTNFAxbFB6ZW9mVWhsdndjbkZUb2hOTkdHZmotWHlNT2xmQjl1VW5zVll2VjhtYjRvNHQ0QmFqeW1XV2FDNkZKNVMxLXFfZk9hM21YUFNLLVBnbF9vWnZFdy1mNDlrYVB0aFRGZ3pkaklmcmFCRA",
     "CBMiekFVX3lxTE9Gby1odC1FSEtwVW1jRWl5enRmSWdzbjVmZGFraHdNUWltdmhIRXBrRVdQTGtEbmc0NUc3bk9YZ1FSWG5YOFJ6bWc2Tk1MM1hWTFkyZkdDTDhvblI3WG1EcmRISmlxdUlWaHh3cEpWNlI4UEJiRksyN0dn",
@@ -212,15 +186,6 @@
     "CBMifkFVX3lxTE8tR3JPN2dCVWZQZTFWVHNmaTJVN3hYOTdWSVo2T1pHMWZfYUoxanM1V2pBZEZjYzh6UnRKb0hXYmw2UGgxa0p2WWdqUnBTa0huTVhhVVFsNW82VVZwdnRBOXhocUR5N3RUb1JJM0NvaGJfVXhyWGVUVnRCMG5Jdw",
     "CBMiS0FVX3lxTE1FLWxrN2I2aXZ2N3NwT0RsYjBSeWkyUWRhV1lwQU54ZjVwRW1BbzR1bHl5WC1fRXN5WW1nQTNLaU9aalNicG9jTkpVd9IBUEFVX3lxTE03NTdQc2x2UnBRcGVZa3BEdWNHbUVMUUMyRk04Z0NUbVFqOUNqdGFQM2lxNGNKRWJzTHhwcHJXQTl4U3Y1S21sdlV2TTh0VV9V"
   ],
-  "Steam — NTE": [
-    "1838407329258836",
-    "1837955055362579",
-    "1836506165582164",
-    "1836506165580042",
-    "1836506165577421",
-    "1836506165556394",
-    "1833334318573778"
-  ],
   "YouTube — NTE Global": [
     "yt:video:Zq586i83E8s",
     "yt:video:4Rebb7V7big",
@@ -263,19 +228,6 @@
     "yt:video:7zomVkm5DQo",
     "yt:video:MAJqNaZ1umc"
   ],
-  "Community — neverness.gg": [
-    "https://neverness.gg/?p=1896",
-    "https://neverness.gg/?p=806",
-    "https://neverness.gg/?p=311",
-    "https://neverness.gg/?p=1854",
-    "https://neverness.gg/?p=1850",
-    "https://neverness.gg/?p=1826",
-    "https://neverness.gg/?p=1764",
-    "https://neverness.gg/?p=1759",
-    "https://neverness.gg/?p=1751",
-    "https://neverness.gg/?p=420",
-    "https://neverness.gg/?p=1659"
-  ],
   "Reddit — r/NevernessToEverness": [
     "t3_1v5o7vt",
     "t3_1uxxd1s",
@@ -315,6 +267,54 @@
     "t3_1ulu913",
     "t3_1ul7151",
     "t3_1ulxd5b"
+  ],
+  "Community — neverness.gg": [
+    "https://neverness.gg/?p=1896",
+    "https://neverness.gg/?p=806",
+    "https://neverness.gg/?p=311",
+    "https://neverness.gg/?p=1854",
+    "https://neverness.gg/?p=1850",
+    "https://neverness.gg/?p=1826",
+    "https://neverness.gg/?p=1764",
+    "https://neverness.gg/?p=1759",
+    "https://neverness.gg/?p=1751",
+    "https://neverness.gg/?p=420",
+    "https://neverness.gg/?p=1659"
+  ],
+  "Steam — NTE": [
+    "1838407329258836",
+    "1837955055362579",
+    "1836506165582164",
+    "1836506165580042",
+    "1836506165577421",
+    "1836506165556394",
+    "1833334318573778"
+  ],
+  "Leaks — r/NTELeaks": [
+    "t3_1v2cjhd",
+    "t3_1uzudae",
+    "t3_1usc314",
+    "t3_1um8xbq",
+    "t3_1v42607",
+    "t3_1ukcor5",
+    "t3_1v1yn93",
+    "t3_1usqeoz",
+    "t3_1ukcjn6",
+    "t3_1ujt0to",
+    "t3_1un8vc9",
+    "t3_1uiw5m8"
+  ],
+  "Official — Perfect World": [
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260720/263221.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260714/263143.html",
+    "https://nte.perfectworld.com/en/article/news/gameevent/20260708/263085.html",
+    "https://nte.perfectworld.com/en/article/news/gamenews/20260708/263057.html",
+    "https://nte.perfectworld.com/en/article/news/gameevent/20260703/262998.html",
+    "https://nte.perfectworld.com/en/article/news/gamenews/20260706/263029.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260706/263019.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260629/262911.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260623/262810.html",
+    "https://nte.perfectworld.com/en/article/news/gamebroad/20260622/262793.html"
   ],
   "__dedup__": [
     "u:steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1836506165556394",
