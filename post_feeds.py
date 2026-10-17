@@ -886,9 +886,23 @@ def _send(payload, image_url=None):
         if r.status_code == 429:
             time.sleep(float(r.json().get("retry_after", 2)) + 0.5)
             continue
-        r.raise_for_status()
+        if not r.ok:
+            # Surface Discord's reason (e.g. "embeds.0.image.url: Not a well
+            # formed URL") — raise_for_status alone hides it.
+            raise requests.HTTPError(
+                f"Discord {r.status_code}: {r.text[:500]}", response=r)
         return
     raise RuntimeError("Discord kept rate-limiting")
+
+
+def _safe_url(u):
+    """u if Discord will accept it as an embed url/image (absolute http(s), no
+    whitespace, ≤2048 chars), else None. A single malformed URL makes Discord
+    reject the WHOLE message with 400."""
+    u = (u or "").strip()
+    if not re.match(r"(?i)^https?://[^\s]+$", u) or len(u) > 2048:
+        return None
+    return u
 
 
 def ping_content(item, source):
@@ -947,14 +961,16 @@ def post_discord(item, source):
     cat_emoji, cat_label, cat_color = classify(en_title)
     color = cat_color if cat_label != "TIN TỨC" else int(source.get("color", 0x5865F2))
     now_vn = dt.datetime.now(VN_TZ).strftime("%H:%M")
+    link = _safe_url(link) or ""
     embed = {
         "title": f'{cat_emoji} {en_title}'[:256],
-        "url": link or None,
         "color": color,
         "author": {"name": author_name[:256]},
         "footer": {"text": f"{cat_emoji} {cat_label} • Neverness to Everness • {now_vn}"},
     }
-    if source.get("icon"):
+    if link:
+        embed["url"] = link
+    if _safe_url(source.get("icon")):
         embed["author"]["icon_url"] = source["icon"]
 
     # REAL body only: a feed summary that just echoes the headline (Google News
@@ -999,12 +1015,14 @@ def post_discord(item, source):
     if when:
         fields.append({"name": "📅 Đăng lúc", "value": when, "inline": True})
     fields.append({"name": "📡 Nguồn", "value": outlet or short_src, "inline": True})
-    if link:
+    # field values cap at 1024 chars — very long (decoded Google News) links
+    # would 400 the whole message; the title already links there anyway.
+    if link and len(link) <= 1000:
         fields.append({"name": "🔗 Chi tiết",
                        "value": f"[Mở bài viết ›]({link})", "inline": True})
 
     # Up to 4 real content images → a gallery.
-    images = art_images or ([item.get("image")] if item.get("image") else [])
+    images = [u for u in (art_images or [item.get("image")]) if _safe_url(u)]
     images = images[:4] or ([source["default_image"]] if source.get("default_image") else [])
 
     # Compose the first embed: category badge, a 📌 Tóm tắt (TL;DR) block, then
@@ -1041,7 +1059,18 @@ def post_discord(item, source):
             label = "🇻🇳 **Tiếng Việt** — bấm để xem:\n" if j == 0 else ""
             embeds.append({"color": color, "description": label + _spoiler(ch)})
 
-    _send_messages(embeds, ping, mentions)
+    try:
+        _send_messages(embeds, ping, mentions)
+    except requests.HTTPError as ex:
+        if ex.response is None or ex.response.status_code != 400:
+            raise
+        # Discord rejected the rich layout → retry once with a bare-bones card
+        # (title, link, short text) so the news still gets through.
+        log(f"! rich embed rejected ({ex}); retrying as a simple card")
+        simple = {k: embed[k] for k in ("title", "url", "color", "author", "footer")
+                  if k in embed}
+        simple["description"] = (summary or desc or "")[:1000] or badge
+        _send_messages([simple], ping, mentions)
 
 
 def _embed_len(e):
@@ -1302,7 +1331,14 @@ def main():
         if any(k in dedup_set for k in keys):
             log(f"⊘ dup{tag} [{src['name']}] {it['title']}")
             return False
-        post_discord(it, src)
+        try:
+            post_discord(it, src)
+        except Exception as ex:
+            # One bad item must never crash the run: a crash skips saving state,
+            # so every later run would re-post the earlier items and die on this
+            # one again. Log it (as a GitHub annotation) and move on.
+            log(f"::warning::post failed [{src['name']}] {it['title']}: {ex}")
+            return False
         for k in keys:
             if k not in dedup_set:
                 dedup_set.add(k)
